@@ -55,7 +55,6 @@ async function scheduleAutoAssign() {
 
     const { match_date, match_time } = result.rows[0];
 
-    // Ensure proper formatting
     const matchDate = typeof match_date === 'string'
       ? match_date
       : match_date.toISOString().split('T')[0];
@@ -89,4 +88,5 @@ async function scheduleAutoAssign() {
   }
 }
 
-scheduleAutoAssign();
+// ✅ Run scheduling after Express starts
+process.nextTick(scheduleAutoAssign);
