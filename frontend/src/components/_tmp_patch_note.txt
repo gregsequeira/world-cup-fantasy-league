@@ -1,0 +1,1 @@
+temporary note: patching compact fixture display in GroupTable.js and CategoryList.js
