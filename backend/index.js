@@ -31,6 +31,11 @@ app.use('/fantasy', fantasyRouter);
 app.use('/cutoff', cutoffRouter);
 app.use('/userScores', userScoresRouter);
 
+// ✅ Health check route for Railway
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
