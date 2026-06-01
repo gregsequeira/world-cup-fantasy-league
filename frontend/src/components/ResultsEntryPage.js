@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import {
   Box,
   Typography,
@@ -17,13 +17,13 @@ function ResultsEntryPage() {
   const [fixtures, setFixtures] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/fixtures')
+    axios.get('/fixtures')
       .then(res => setFixtures(res.data))
       .catch(err => console.error(err));
   }, []);
 
   const handleSubmit = (fixtureId, homeScore, awayScore) => {
-    axios.put(`http://localhost:5000/fixtures/${fixtureId}/result`, {
+    axios.put(`/fixtures/${fixtureId}/result`, {
       home_score: parseInt(homeScore, 10),
       away_score: parseInt(awayScore, 10),
       status: "Completed"

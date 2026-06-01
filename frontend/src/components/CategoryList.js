@@ -1,5 +1,5 @@
 import React from 'react';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import { Box, Typography, Card, CardContent, Divider } from '@mui/material';
 import Flag from 'react-world-flags';
 import { formatDayMonth, formatShortTime } from '../utils/dateUtils'; // ✅ shared utils
@@ -15,7 +15,7 @@ function CategoryList({ teams }) {
       if (fixtures || loading) return;
       setLoading(true);
       try {
-        const res = await axios.get(`http://localhost:5000/fixtures/team/${team.id}`);
+        const res = await axios.get(`/fixtures/team/${team.id}`);
         setFixtures(res.data);
       } catch (err) {
         console.error('Failed to load fixtures', err);

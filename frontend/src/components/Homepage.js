@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import {
   AppBar,
   Tabs,
@@ -27,7 +27,7 @@ function Homepage() {
   const [loginOpen, setLoginOpen] = useState(false);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/teams')
+    axios.get('/teams')
       .then(res => setTeams(res.data))
       .catch(err => console.error(err));
   }, []);
