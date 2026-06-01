@@ -77,9 +77,6 @@ async function scheduleAutoAssign() {
     console.log(`Auto-assign scheduled for ${cutoff.toISOString()} (in ${Math.round(delay/60000)} minutes)`);
     setTimeout(autoAssignTeams, delay);
   }
-  } catch (err) {
-    console.error('Error scheduling auto-assign:', err.message);
-  }
 }
 
 scheduleAutoAssign();
