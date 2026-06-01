@@ -1,7 +1,7 @@
 // src/components/UserScoreCard.js
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, Typography, CircularProgress } from '@mui/material';
-import axios from 'axios';
+import axios from '../axiosConfig';
 
 const UserScoreCard = ({ userId }) => {
   const [score, setScore] = useState(null);
@@ -10,7 +10,7 @@ const UserScoreCard = ({ userId }) => {
   useEffect(() => {
     if (!userId) return;
     setLoading(true);
-    axios.get(`http://localhost:5000/user-scores/${userId}`)
+    axios.get(`/user-scores/${userId}`)
       .then(res => setScore(res.data))
       .catch(() => setScore({ total_points: 0, total_goal_difference: 0 }))
       .finally(() => setLoading(false));

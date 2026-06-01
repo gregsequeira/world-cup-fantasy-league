@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Box, TextField, Button, Typography } from '@mui/material';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import { useNavigate } from 'react-router-dom';
 
 function LoginModal({ open, onClose, onLogin }) {
@@ -29,7 +29,7 @@ function LoginModal({ open, onClose, onLogin }) {
 
   setLoading(true);
   try {
-    const res = await axios.post('http://localhost:5000/auth/login', { email, password });
+    const res = await axios.post('/auth/login', { email, password });
     const { token, user } = res.data;
 
     // ✅ Save user info in localStorage

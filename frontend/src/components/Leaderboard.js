@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, Typography, Table, TableHead, TableRow, TableCell, TableBody, CircularProgress } from '@mui/material';
-import axios from 'axios';
+import axios from '../axiosConfig';
 
 const Leaderboard = ({ currentUserId }) => {
   const [scores, setScores] = useState([]);
@@ -8,7 +8,7 @@ const Leaderboard = ({ currentUserId }) => {
 
   useEffect(() => {
     setLoading(true);
-    axios.get('http://localhost:5000/user-scores')
+    axios.get('/user-scores')
       .then(res => setScores(res.data))
       .catch(() => setScores([]))
       .finally(() => setLoading(false));

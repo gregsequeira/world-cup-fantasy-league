@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, Typography, Divider, Box } from '@mui/material';
 import Flag from 'react-world-flags';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import { formatDayMonth, formatShortTime } from '../utils/dateUtils'; // ✅ shared utils
 
 export const TeamCard = ({ label, team }) => {
@@ -13,13 +13,13 @@ export const TeamCard = ({ label, team }) => {
     if (!team?.id) return;
 
     // ✅ Fetch fixtures
-    axios.get(`http://localhost:5000/fixtures/team/${team.id}`)
+    axios.get(`/fixtures/team/${team.id}`)
       .then(res => setFixtures(res.data))
       .catch(() => setFixtures([]));
 
     // ✅ Fetch stats from /standings/:teamId
     setLoadingStats(true);
-    axios.get(`http://localhost:5000/standings/${team.id}`)
+    axios.get(`/standings/${team.id}`)
       .then(res => {
         let s = res.data;
 

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Card, CardContent, Button, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../axiosConfig';
 
 function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -19,9 +19,9 @@ function AdminDashboard() {
     const headers = { Authorization: `Bearer ${token}` };
 
     Promise.all([
-      axios.get('http://localhost:5000/auth/pending-users', { headers }),
-      axios.get('http://localhost:5000/auth/verified-users', { headers }),
-      axios.get('http://localhost:5000/fixtures'),
+      axios.get('/auth/pending-users', { headers }),
+      axios.get('/auth/verified-users', { headers }),
+      axios.get('/fixtures'),
     ])
       .then(([pendingRes, verifiedRes, fixturesRes]) => {
         const fixtures = fixturesRes.data || [];

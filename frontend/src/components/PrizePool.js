@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, LinearProgress } from '@mui/material';
-import axios from 'axios';
+import axios from '../axiosConfig';
 
 function PrizePool() {
   const [pool, setPool] = useState(0);
   const [displayPool, setDisplayPool] = useState(0);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/auth/prize-pool')
+    axios.get('/auth/prize-pool')
       .then(res => {
         const target = res.data.prizePool;
         setPool(target);
