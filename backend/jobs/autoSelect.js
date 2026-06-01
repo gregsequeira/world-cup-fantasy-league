@@ -86,9 +86,6 @@ async function scheduleAutoAssign() {
   } catch (err) {
     console.error('Error in scheduleAutoAssign:', err);
   }
-  } catch (err) {
-    console.error('Error scheduling auto-assign:', err.message);
-  }
 }
 
 // ✅ Run scheduling after Express starts
