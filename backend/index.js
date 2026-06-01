@@ -30,6 +30,11 @@ app.use('/userKnockout', userKnockoutRouter);
 app.use('/fantasy', fantasyRouter);
 app.use('/cutoff', cutoffRouter);
 app.use('/userScores', userScoresRouter);
+app.use('/user-scores', userScoresRouter);
+
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
+});
 
 // Start server
 app.listen(PORT, () => {

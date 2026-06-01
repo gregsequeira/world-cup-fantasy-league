@@ -32,17 +32,18 @@ async function autoAssignTeams() {
 
 // Schedule once at cutoff
 async function scheduleAutoAssign() {
-  const result = await pool.query(
-    `SELECT match_date, match_time 
-     FROM fixtures 
-     ORDER BY match_date ASC, match_time ASC 
-     LIMIT 1`
-  );
+  try {
+    const result = await pool.query(
+      `SELECT match_date, match_time 
+       FROM fixtures 
+       ORDER BY match_date ASC, match_time ASC 
+       LIMIT 1`
+    );
 
-  if (result.rows.length === 0) {
-    console.log('No fixtures found, auto-assign not scheduled.');
-    return;
-  }
+    if (result.rows.length === 0) {
+      console.log('No fixtures found, auto-assign not scheduled.');
+      return;
+    }
 
   const { match_date, match_time } = result.rows[0];
 
@@ -75,6 +76,9 @@ async function scheduleAutoAssign() {
   } else {
     console.log(`Auto-assign scheduled for ${cutoff.toISOString()} (in ${Math.round(delay/60000)} minutes)`);
     setTimeout(autoAssignTeams, delay);
+  }
+  } catch (err) {
+    console.error('Error scheduling auto-assign:', err.message);
   }
 }
 
