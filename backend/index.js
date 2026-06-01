@@ -4,7 +4,7 @@ require('dotenv').config();
 require('./jobs/autoSelect'); // start the auto-selection job
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors());
