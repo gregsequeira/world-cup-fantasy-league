@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import { Box, Typography, Button, Card, CardContent, Divider, Modal } from '@mui/material';
 import Flag from 'react-world-flags';
 
@@ -17,11 +17,11 @@ function TeamsSelectionPage() {
     const token = localStorage.getItem('token');
 
     // ✅ Fetch teams for card rendering
-    axios.get('http://localhost:5000/teams')
+    axios.get('/teams')
       .then(res => setTeams(res.data));
 
     // ✅ Fetch existing selections
-    axios.get('http://localhost:5000/userSelections/my', { headers: { Authorization: `Bearer ${token}` } })
+    axios.get('/userSelections/my', { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         const data = res.data;
         setSelections({
@@ -33,7 +33,7 @@ function TeamsSelectionPage() {
       });
 
     // ✅ Fetch cutoff time
-    axios.get('http://localhost:5000/cutoff')
+    axios.get('/cutoff')
       .then(res => setCutoff(new Date(res.data.cutoff)));
   }, []);
 
@@ -86,7 +86,7 @@ function TeamsSelectionPage() {
     return;
   }
   try {
-    await axios.post('http://localhost:5000/userSelections/select', {
+    await axios.post('/userSelections/select', {
       favouriteId: selections.Favourite,
       seededId: selections.Seeded,
       darkHorseId: selections['Dark Horse'],

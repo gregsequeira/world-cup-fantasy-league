@@ -14,3 +14,4 @@ const addTeam = async (name, ranking, group_name, category, flag_code) => {
 };
 
 module.exports = { getAllTeams, addTeam };
+

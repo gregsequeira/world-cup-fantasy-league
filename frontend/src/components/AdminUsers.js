@@ -4,7 +4,7 @@ import {
   Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, 
   Box, Tabs, Tab, Snackbar, Alert
 } from '@mui/material';
-import axios from 'axios';
+import axios from '../axiosConfig';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState({ pending: [], verified: [] }); // ✅ separate lists
@@ -20,10 +20,10 @@ const AdminUsers = () => {
 
     setLoading(true);
     Promise.all([
-      axios.get('http://localhost:5000/auth/pending-users', {
+      axios.get('/auth/pending-users', {
         headers: { Authorization: `Bearer ${token}` }
       }),
-      axios.get('http://localhost:5000/auth/verified-users', {
+      axios.get('/auth/verified-users', {
         headers: { Authorization: `Bearer ${token}` }
       })
     ])
@@ -49,7 +49,7 @@ const AdminUsers = () => {
     if (!selectedUser) return;
     const token = localStorage.getItem('token');
 
-    axios.post(`http://localhost:5000/auth/verify/${selectedUser.id}`, {}, {
+    axios.post(`/auth/verify/${selectedUser.id}`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => {

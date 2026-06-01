@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Box, TextField, Button, Typography } from '@mui/material';
-import axios from 'axios';
+import axios from '../axiosConfig';
 
 function SignupModal({ open, onClose, onLogin, onOpenLogin }) {
   const [name, setName] = useState('');
@@ -21,7 +21,7 @@ function SignupModal({ open, onClose, onLogin, onOpenLogin }) {
 
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/auth/signup', { 
+      const res = await axios.post('/auth/signup', { 
         name, 
         email, 
         password, 

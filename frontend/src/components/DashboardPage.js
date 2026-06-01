@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Card, CardContent, Button, Divider, CircularProgress } from '@mui/material';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import { TeamCard } from './TeamCard';   
 import UserScoreCard from './UserScoreCard';   // ✅ Overall score card
 import Leaderboard from './Leaderboard';       // ✅ Leaderboard component
@@ -20,7 +20,7 @@ function DashboardPage() {
 
   // Fetch cutoff time
   useEffect(() => {
-    axios.get('http://localhost:5000/cutoff')
+    axios.get('/cutoff')
       .then(res => setCutoff(new Date(res.data.cutoff)))
       .catch(err => console.error('Cutoff fetch failed', err));
   }, []);
@@ -50,7 +50,7 @@ function DashboardPage() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    axios.get('http://localhost:5000/auth/user/me', {
+    axios.get('/auth/user/me', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => {
@@ -63,12 +63,12 @@ function DashboardPage() {
       })
       .catch(err => console.error('Failed to fetch user info', err));
 
-    axios.get('http://localhost:5000/teams')
+    axios.get('/teams')
       .then(res => setTeams(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoadingTeams(false));
 
-    axios.get('http://localhost:5000/userSelections/my', {
+    axios.get('/userSelections/my', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => {

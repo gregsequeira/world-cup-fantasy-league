@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import { Box, Typography, List, ListItem, Paper } from '@mui/material';
 import Flag from 'react-world-flags';
 import { formatShortDate, formatShortTime } from '../utils/dateUtils';
@@ -8,7 +8,7 @@ function FixturesPage() {
   const [fixtures, setFixtures] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/fixtures')
+    axios.get('/fixtures')
       .then(res => setFixtures(res.data))
       .catch(err => console.error(err));
   }, []);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../axiosConfig';
 import {
   Box,
   Typography,
@@ -16,7 +16,7 @@ function StandingsPage() {
   const [standings, setStandings] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/standings')
+    axios.get('/standings')
       .then(res => setStandings(res.data))
       .catch(err => console.error(err));
   }, []);

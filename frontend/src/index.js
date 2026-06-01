@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import './axiosConfig'; // Initialize axios interceptor for API base URL
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import './axiosConfig'; // Initialize axios interceptor for API base URL
 
 // Set body background using PUBLIC_URL so images in `public/` are used
 const publicUrl = process.env.PUBLIC_URL || '';
