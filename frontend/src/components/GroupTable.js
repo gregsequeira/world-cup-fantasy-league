@@ -52,6 +52,7 @@ function GroupTable({ teams }) {
         sx={{
           perspective: 1000,
           width: '100%',
+          height: '100%',
           cursor: 'pointer'
         }}
       >
@@ -71,7 +72,6 @@ function GroupTable({ teams }) {
               position: 'absolute',
               width: '100%',
               height: '100%',
-              minHeight: 180,
               boxShadow: 4,
               borderRadius: 3,
               textAlign: 'center',
@@ -86,7 +86,8 @@ function GroupTable({ teams }) {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                height: '100%'
               }}
             >
               <Flag
@@ -120,7 +121,6 @@ function GroupTable({ teams }) {
               position: 'absolute',
               width: '100%',
               height: '100%',
-              minHeight: 180,
               boxShadow: 6,
               borderRadius: 3,
               textAlign: 'left',
@@ -131,7 +131,7 @@ function GroupTable({ teams }) {
               p: 1
             }}
           >
-            <CardContent sx={{ overflowY: 'auto' }}>
+            <CardContent sx={{ height: '100%', overflowY: 'auto' }}>
               <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
                 <Flag
                   code={team.flag_code}
@@ -222,13 +222,15 @@ function GroupTable({ teams }) {
                 md: 'repeat(4, 1fr)'
               },
               gap: 3,
-              justifyItems: 'center'
+              alignItems: 'stretch'
             }}
           >
             {teams
               .filter(t => t.group_name === group)
               .map(team => (
-                <TeamCard key={team.id} team={team} />
+                <Box key={team.id} sx={{ height: 240 }}>
+                  <TeamCard team={team} />
+                </Box>
               ))}
           </Box>
         </Box>
