@@ -1,4 +1,4 @@
-const pool = require('./db');
+const pool = require('../db');
 
 const getAllTeams = async () => {
   const result = await pool.query('SELECT * FROM teams ORDER BY group_name, ranking');
@@ -14,4 +14,3 @@ const addTeam = async (name, ranking, group_name, category, flag_code) => {
 };
 
 module.exports = { getAllTeams, addTeam };
-
