@@ -52,9 +52,6 @@ function GroupTable({ teams }) {
         sx={{
           perspective: 1000,
           width: '100%',
-          maxWidth: { xs: '100%', sm: 220 },
-          minWidth: { xs: '100%', sm: 180 },
-          height: { xs: 'auto', sm: 220 },
           cursor: 'pointer'
         }}
       >
@@ -74,6 +71,7 @@ function GroupTable({ teams }) {
               position: 'absolute',
               width: '100%',
               height: '100%',
+              minHeight: 180,
               boxShadow: 4,
               borderRadius: 3,
               textAlign: 'center',
@@ -88,8 +86,7 @@ function GroupTable({ teams }) {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%'
+                justifyContent: 'center'
               }}
             >
               <Flag
@@ -123,6 +120,7 @@ function GroupTable({ teams }) {
               position: 'absolute',
               width: '100%',
               height: '100%',
+              minHeight: 180,
               boxShadow: 6,
               borderRadius: 3,
               textAlign: 'left',
@@ -133,7 +131,7 @@ function GroupTable({ teams }) {
               p: 1
             }}
           >
-            <CardContent sx={{ height: '100%', overflowY: 'auto' }}>
+            <CardContent sx={{ overflowY: 'auto' }}>
               <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
                 <Flag
                   code={team.flag_code}
