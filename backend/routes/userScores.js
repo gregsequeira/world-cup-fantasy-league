@@ -21,27 +21,27 @@ router.get('/', async (req, res) => {
           u.name AS user_name,
           COALESCE(SUM(
               CASE
-                  WHEN f.status = 'Completed' AND f.round <= 3 AND sel.role IN ('Favourite','Underdog') THEN
+                  WHEN f.status = 'Completed' AND f.round::integer <= 3 AND sel.role IN ('Favourite','Underdog') THEN
                     CASE
                       WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 6
                       WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 6
                       WHEN (sel.team_id = f.home_team_id OR sel.team_id = f.away_team_id) AND f.home_score = f.away_score THEN 2
                       ELSE 0
                     END
-                  WHEN f.status = 'Completed' AND f.round <= 3 THEN
+                  WHEN f.status = 'Completed' AND f.round::integer <= 3 THEN
                     CASE
                       WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 3
                       WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 3
                       WHEN (sel.team_id = f.home_team_id OR sel.team_id = f.away_team_id) AND f.home_score = f.away_score THEN 1
                       ELSE 0
                     END
-                  WHEN f.status = 'Completed' AND f.round >= 4 AND sel.role = 'KOFavourite' THEN
+                  WHEN f.status = 'Completed' AND f.round::integer >= 4 AND sel.role = 'KOFavourite' THEN
                     CASE
                       WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 6
                       WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 6
                       ELSE 0
                     END
-                  WHEN f.status = 'Completed' AND f.round >= 4 THEN
+                  WHEN f.status = 'Completed' AND f.round::integer >= 4 THEN
                     CASE
                       WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 3
                       WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 3
@@ -91,27 +91,27 @@ router.get('/:userId', async (req, res) => {
           u.name AS user_name,
           COALESCE(SUM(
               CASE
-                  WHEN f.status = 'Completed' AND f.round <= 3 AND sel.role IN ('Favourite','Underdog') THEN
+                  WHEN f.status = 'Completed' AND f.round::integer <= 3 AND sel.role IN ('Favourite','Underdog') THEN
                     CASE
                       WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 6
                       WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 6
                       WHEN (sel.team_id = f.home_team_id OR sel.team_id = f.away_team_id) AND f.home_score = f.away_score THEN 2
                       ELSE 0
                     END
-                  WHEN f.status = 'Completed' AND f.round <= 3 THEN
+                  WHEN f.status = 'Completed' AND f.round::integer <= 3 THEN
                     CASE
                       WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 3
                       WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 3
                       WHEN (sel.team_id = f.home_team_id OR sel.team_id = f.away_team_id) AND f.home_score = f.away_score THEN 1
                       ELSE 0
                     END
-                  WHEN f.status = 'Completed' AND f.round >= 4 AND sel.role = 'KOFavourite' THEN
+                  WHEN f.status = 'Completed' AND f.round::integer >= 4 AND sel.role = 'KOFavourite' THEN
                     CASE
                       WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 6
                       WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 6
                       ELSE 0
                     END
-                  WHEN f.status = 'Completed' AND f.round >= 4 THEN
+                  WHEN f.status = 'Completed' AND f.round::integer >= 4 THEN
                     CASE
                       WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 3
                       WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 3
