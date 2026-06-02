@@ -19,6 +19,7 @@ router.get('/', async (req, res) => {
       SELECT
           u.id AS user_id,
           u.name AS user_name,
+          u.verified,  -- ✅ include verified flag
           COALESCE(SUM(
               CASE
                   WHEN f.status = 'Completed' AND f.round::integer <= 3 AND sel.role IN ('Favourite','Underdog') THEN
@@ -60,7 +61,7 @@ router.get('/', async (req, res) => {
       FROM users u
       LEFT JOIN selections sel ON u.id = sel.user_id
       LEFT JOIN fixtures f ON sel.team_id = f.home_team_id OR sel.team_id = f.away_team_id
-      GROUP BY u.id, u.name
+      GROUP BY u.id, u.name, u.verified
       ORDER BY total_points DESC, total_goal_difference DESC;
     `);
 
@@ -70,6 +71,7 @@ router.get('/', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+
 
 // Get score for a single user
 router.get('/:userId', async (req, res) => {
