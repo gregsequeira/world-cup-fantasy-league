@@ -1,4 +1,3 @@
-// src/components/UserScoreCard.js
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, Typography, CircularProgress } from '@mui/material';
 import axios from '../axiosConfig';
@@ -20,7 +19,7 @@ const UserScoreCard = ({ userId }) => {
     <Card
       sx={{
         width: '100%',
-        maxWidth: 400,
+        maxWidth: { xs: '100%', md: 400 }, // ✅ full width on mobile
         mx: 'auto',
         mb: 3,
         boxShadow: 6,
@@ -32,17 +31,39 @@ const UserScoreCard = ({ userId }) => {
       }}
     >
       <CardContent>
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#00FFCC' }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 'bold',
+            mb: 2,
+            color: '#00FFCC',
+            fontSize: { xs: '1rem', md: '1.25rem' } // ✅ responsive font
+          }}
+        >
           Overall Score
         </Typography>
         {loading ? (
-          <CircularProgress size={24} sx={{ color: '#00FFCC' }} />
+          <CircularProgress size={28} sx={{ color: '#00FFCC' }} />
         ) : (
           <>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#00FFCC' }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 'bold',
+                color: '#00FFCC',
+                fontSize: { xs: '1.2rem', md: '1.5rem' }
+              }}
+            >
               Points: {score?.total_points}
             </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#facc15' }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 'bold',
+                color: '#facc15',
+                fontSize: { xs: '1.2rem', md: '1.5rem' }
+              }}
+            >
               Goal Difference: {score?.total_goal_difference}
             </Typography>
           </>

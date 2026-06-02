@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SignupModal from './SignupModal';
 import LoginModal from './LoginModal';
 
@@ -11,7 +10,6 @@ function Navbar() {
   const [openLogin, setOpenLogin] = useState(false);
   const navigate = useNavigate();
 
-  // Load user info from localStorage on mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -31,52 +29,68 @@ function Navbar() {
   };
 
   return (
-    <AppBar position="sticky" sx={{ backgroundColor: '#7FC8A9', boxShadow: 4 }}>
-      <Toolbar>
+    <AppBar
+      position="sticky"
+      sx={{
+        backgroundColor: '#7FC8A9',
+        boxShadow: 4,
+        px: { xs: 1, md: 2 }
+      }}
+    >
+      <Toolbar sx={{ flexWrap: 'wrap' }}>
         {/* Logo / Title */}
         <Typography
           variant="h6"
           component="div"
-          sx={{ flexGrow: 1, fontWeight: 'bold', letterSpacing: 1 }}
+          sx={{
+            flexGrow: 1,
+            fontWeight: 'bold',
+            letterSpacing: 1,
+            fontSize: { xs: '1rem', md: '1.25rem' }
+          }}
         >
           World Cup Fantasy League
         </Typography>
 
         {/* Navigation Links */}
-        <Box>
-  <Button color="inherit" component={Link} to="/">
-    Home
-  </Button>
-  {user ? (
-    <>
-      <Button color="inherit" component={Link} to="/dashboard">
-        Dashboard
-      </Button>
-      {user.role === 'admin' && (
-        <Button color="inherit" component={Link} to="/admin">
-          Admin Dashboard
-        
-        </Button>
-      )}
-      <Button color="inherit" component={Link} to="/overall-leaderboard">
-    Leaderboard
-  </Button>
-      <Button color="inherit" onClick={handleLogout}>
-        Logout
-      </Button>
-    </>
-  ) : (
-    <>
-      <Button color="inherit" onClick={() => setOpenSignup(true)}>
-        Sign Up
-      </Button>
-      <Button color="inherit" onClick={() => setOpenLogin(true)}>
-        Login
-      </Button>
-    </>
-  )}
-</Box>
-
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: { xs: 0.5, md: 1 },
+          }}
+        >
+          <Button color="inherit" component={Link} to="/" sx={{ fontSize: { xs: '0.8rem', md: '0.9rem' } }}>
+            Home
+          </Button>
+          {user ? (
+            <>
+              <Button color="inherit" component={Link} to="/dashboard" sx={{ fontSize: { xs: '0.8rem', md: '0.9rem' } }}>
+                Dashboard
+              </Button>
+              {user.role === 'admin' && (
+                <Button color="inherit" component={Link} to="/admin" sx={{ fontSize: { xs: '0.8rem', md: '0.9rem' } }}>
+                  Admin Dashboard
+                </Button>
+              )}
+              <Button color="inherit" component={Link} to="/overall-leaderboard" sx={{ fontSize: { xs: '0.8rem', md: '0.9rem' } }}>
+                Leaderboard
+              </Button>
+              <Button color="inherit" onClick={handleLogout} sx={{ fontSize: { xs: '0.8rem', md: '0.9rem' } }}>
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button color="inherit" onClick={() => setOpenSignup(true)} sx={{ fontSize: { xs: '0.8rem', md: '0.9rem' } }}>
+                Sign Up
+              </Button>
+              <Button color="inherit" onClick={() => setOpenLogin(true)} sx={{ fontSize: { xs: '0.8rem', md: '0.9rem' } }}>
+                Login
+              </Button>
+            </>
+          )}
+        </Box>
       </Toolbar>
 
       {/* Modals */}
@@ -84,7 +98,7 @@ function Navbar() {
         open={openSignup}
         onClose={() => setOpenSignup(false)}
         onLogin={setUser}
-        onOpenLogin={() => setOpenLogin(true)} 
+        onOpenLogin={() => setOpenLogin(true)}
       />
       <LoginModal
         open={openLogin}

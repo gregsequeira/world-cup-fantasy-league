@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, Typography, Divider, Box } from '@mui/material';
 import Flag from 'react-world-flags';
 import axios from '../axiosConfig';
-import { formatDayMonth, formatShortTime } from '../utils/dateUtils'; // ✅ shared utils
+import { formatDayMonth, formatShortTime } from '../utils/dateUtils';
 
 export const TeamCard = ({ label, team }) => {
   const [fixtures, setFixtures] = useState(null);
@@ -12,22 +12,17 @@ export const TeamCard = ({ label, team }) => {
   useEffect(() => {
     if (!team?.id) return;
 
-    // ✅ Fetch fixtures
     axios.get(`/fixtures/team/${team.id}`)
       .then(res => setFixtures(res.data))
       .catch(() => setFixtures([]));
 
-    // ✅ Fetch stats from /standings/:teamId
     setLoadingStats(true);
     axios.get(`/standings/${team.id}`)
       .then(res => {
         let s = res.data;
-
-        // ✅ Apply double points rule for Favourite & Underdog
         if (label.toLowerCase().includes('favourite') || label.toLowerCase().includes('underdog')) {
           s.points = s.points * 2;
         }
-
         setStats(s);
       })
       .catch(() => setStats({ points: 0, goal_difference: 0, goals_for: 0, goals_against: 0 }))
@@ -35,12 +30,21 @@ export const TeamCard = ({ label, team }) => {
   }, [team?.id, label]);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        width: '100%',
+        maxWidth: { xs: '100%', sm: 360 },
+        mx: 'auto',
+        mb: 3
+      }}
+    >
       {/* Team Card */}
       <Card
         sx={{
-          width: 340,
-          minWidth: 300,
+          width: '100%',
           boxShadow: 4,
           borderRadius: 3,
           textAlign: 'center',
@@ -50,19 +54,50 @@ export const TeamCard = ({ label, team }) => {
         }}
       >
         <CardContent>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>{label}</Typography>
-          {team.flag_code && <Flag code={team.flag_code} style={{ width: 60, height: 40, marginBottom: 8 }} />}
-          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{team.name}</Typography>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 'bold', mb: 1, fontSize: { xs: '0.9rem', md: '1rem' } }}
+          >
+            {label}
+          </Typography>
+          {team.flag_code && (
+            <Flag
+              code={team.flag_code}
+              style={{ width: 60, height: 40, marginBottom: 8 }}
+            />
+          )}
+          <Typography
+            variant="body1"
+            sx={{ fontWeight: 'bold', fontSize: { xs: '0.95rem', md: '1rem' } }}
+          >
+            {team.name}
+          </Typography>
           <Divider sx={{ my: 1, width: '80%' }} />
-          {team.ranking && <Typography variant="body2" color="text.secondary">Ranking: {team.ranking}</Typography>}
-          {team.group_name && <Typography variant="body2" color="text.secondary">{team.group_name}</Typography>}
+          {team.ranking && (
+            <Typography variant="body2" color="text.secondary">
+              Ranking: {team.ranking}
+            </Typography>
+          )}
+          {team.group_name && (
+            <Typography variant="body2" color="text.secondary">
+              {team.group_name}
+            </Typography>
+          )}
 
           {/* Fixtures */}
           <Divider sx={{ my: 2 }} />
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>Fixtures</Typography>
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 'bold', mb: 1, fontSize: { xs: '0.85rem', md: '0.95rem' } }}
+          >
+            Fixtures
+          </Typography>
           {fixtures && fixtures.map(f => (
             <Box key={f.id} sx={{ mb: 0.5 }}>
-              <Typography variant="body2" sx={{ fontSize: '0.85rem', lineHeight: 1.1 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontSize: { xs: '0.75rem', md: '0.85rem' }, lineHeight: 1.2 }}
+              >
                 {formatDayMonth(f.match_date)} {f.home_team} vs {f.away_team} {formatShortTime(f.match_time)}
               </Typography>
             </Box>
@@ -73,8 +108,7 @@ export const TeamCard = ({ label, team }) => {
       {/* Stats Card */}
       <Card
         sx={{
-          width: 340,
-          minWidth: 300,
+          width: '100%',
           mt: 1.5,
           boxShadow: 6,
           borderRadius: 3,
@@ -85,23 +119,43 @@ export const TeamCard = ({ label, team }) => {
         }}
       >
         <CardContent>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#00FFCC' }}>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 'bold',
+              mb: 1,
+              color: '#00FFCC',
+              fontSize: { xs: '0.9rem', md: '1rem' }
+            }}
+          >
             Stats
           </Typography>
           {loadingStats ? (
             <Typography variant="body2">Loading stats...</Typography>
           ) : (
             <>
-              <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#00FFCC' }}>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.95rem', md: '1rem' } }}
+              >
                 Points: {stats?.points}
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#facc15' }}>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: 'bold', color: '#facc15', fontSize: { xs: '0.95rem', md: '1rem' } }}
+              >
                 Goal Difference: {stats?.goal_difference}
               </Typography>
-              <Typography variant="body2" sx={{ color: '#f3f4f6' }}>
+              <Typography
+                variant="body2"
+                sx={{ color: '#f3f4f6', fontSize: { xs: '0.8rem', md: '0.9rem' } }}
+              >
                 Goals For: {stats?.goals_for}
               </Typography>
-              <Typography variant="body2" sx={{ color: '#f3f4f6' }}>
+              <Typography
+                variant="body2"
+                sx={{ color: '#f3f4f6', fontSize: { xs: '0.8rem', md: '0.9rem' } }}
+              >
                 Goals Against: {stats?.goals_against}
               </Typography>
             </>
