@@ -28,7 +28,6 @@ function CategoryList({ teams }) {
       typeof window !== 'undefined' &&
       ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
-    // Desktop hover
     const handleMouseEnter = () => {
       if (!isTouchDevice()) {
         setFlipped(true);
@@ -38,8 +37,6 @@ function CategoryList({ teams }) {
     const handleMouseLeave = () => {
       if (!isTouchDevice()) setFlipped(false);
     };
-
-    // Mobile tap
     const handleClick = () => {
       if (isTouchDevice()) {
         setFlipped(prev => !prev);
@@ -54,7 +51,8 @@ function CategoryList({ teams }) {
         onClick={handleClick}
         sx={{
           perspective: 1000,
-          width: { xs: '100%', sm: 220 },
+          width: '100%',
+          maxWidth: { xs: '100%', sm: 220 },
           minWidth: { xs: '100%', sm: 180 },
           height: { xs: 'auto', sm: 220 },
           cursor: 'pointer'
@@ -96,7 +94,6 @@ function CategoryList({ teams }) {
             >
               <Flag
                 code={team.flag_code}
-                className="team-flag"
                 style={{ width: 60, height: 40, marginBottom: 8 }}
               />
               <Typography
@@ -140,7 +137,6 @@ function CategoryList({ teams }) {
               <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
                 <Flag
                   code={team.flag_code}
-                  className="team-flag"
                   style={{
                     width: 60,
                     height: 40,
@@ -170,8 +166,7 @@ function CategoryList({ teams }) {
                         lineHeight: 1.2
                       }}
                     >
-                      {formatDayMonth(f.match_date)} {f.home_team} vs{' '}
-                      {f.away_team} {formatShortTime(f.match_time)}
+                      {formatDayMonth(f.match_date)} {f.home_team} vs {f.away_team} {formatShortTime(f.match_time)}
                     </Typography>
                   </Box>
                 ))}
@@ -187,7 +182,7 @@ function CategoryList({ teams }) {
   return (
     <Box
       sx={{
-        p: 3,
+        p: { xs: 2, md: 3 },
         backgroundImage: 'url(/images/background1.png)',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
@@ -225,7 +220,8 @@ function CategoryList({ teams }) {
               display: 'grid',
               gridTemplateColumns: {
                 xs: '1fr',
-                sm: 'repeat(auto-fit, minmax(200px, 1fr))'
+                sm: 'repeat(2, 1fr)',
+                md: 'repeat(4, 1fr)'
               },
               gap: 3,
               justifyItems: 'center'

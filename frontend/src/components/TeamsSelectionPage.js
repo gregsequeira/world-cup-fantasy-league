@@ -301,6 +301,18 @@ function TeamsSelectionPage() {
           </Box>
         </Modal>
       </Box>
+      <Typography
+    variant="body2"
+    sx={{
+      mb: 2,
+      textAlign: 'center',
+      fontStyle: 'italic',
+      color: 'text.secondary',
+      fontSize: { xs: '0.85rem', md: '0.95rem' }
+    }}
+  >
+    Tip: Click on a card to select or remove a team.
+  </Typography>
             {/* Category Cards */}
       {['Seeded','Dark Horse','Underdog'].map(role => (
         <Box
