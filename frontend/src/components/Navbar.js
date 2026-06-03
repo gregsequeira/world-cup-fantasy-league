@@ -3,6 +3,7 @@ import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import SignupModal from './SignupModal';
 import LoginModal from './LoginModal';
+import logo from '../logo.png';
 
 function Navbar() {
   const [user, setUser] = useState(null);
@@ -46,9 +47,16 @@ function Navbar() {
             flexGrow: 1,
             fontWeight: 'bold',
             letterSpacing: 1,
+            display: 'flex',
+            alignItems: 'center',
             fontSize: { xs: '1rem', md: '1.25rem' }
           }}
         >
+          <img
+          src={logo}
+          alt="PSG WC logo"
+          style={{ width: 32, height: 32, marginRight: 8 }}
+          />
           World Cup Fantasy League
         </Typography>
 
