@@ -20,7 +20,11 @@ const Leaderboard = ({ currentUserId }) => {
   useEffect(() => {
     setLoading(true);
     axios.get('/user-scores')
-      .then(res => setScores(res.data))
+      .then(res => {
+        // ✅ Only include verified users
+        const verified = res.data.filter(u => u.verified);
+        setScores(verified);
+      })
       .catch(() => setScores([]))
       .finally(() => setLoading(false));
   }, []);
