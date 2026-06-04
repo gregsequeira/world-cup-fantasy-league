@@ -45,7 +45,6 @@ function SignupModal({ open, onClose, onOpenLogin }) {
 
         // ✅ Redirect to dashboard
         navigate('/dashboard');
-        onClose();
       }
     } catch (err) {
       console.error('Signup failed:', err);
