@@ -63,9 +63,16 @@ function ResultsEntryPage() {
               {groupedByRound[round]
                 .sort((a, b) => new Date(`${a.match_date}T${a.match_time}`) - new Date(`${b.match_date}T${b.match_time}`))
                 .map(fixture => {
-                  const fixtureDateTime = new Date(`${fixture.match_date}T${fixture.match_time}`);
+                  const fixtureDateTime = new Date(fixture.match_date); // ✅ ensure correct timezone parsing
                   const now = new Date();
                   const canSubmit = now >= fixtureDateTime;
+
+                  console.log("Fixture:", fixture.match_date, fixture.match_time);
+console.log("Parsed Date:", fixtureDateTime);
+console.log("Now:", now);
+console.log("Can Submit:", canSubmit);
+console.log("FixtureDateTime:", fixtureDateTime.toString());
+
 
                   return (
                     <ListItem
