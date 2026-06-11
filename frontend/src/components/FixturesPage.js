@@ -148,9 +148,9 @@ function FixturesPage() {
                       >
                         <Typography
                           variant="body2"
-                          sx={{ fontWeight: 800, color: '#7FC8A9' }}
+                          sx={{ fontWeight: 800, color: '#000000' }}
                         >
-                          -
+                          {fixture.status === "Upcoming" ? "-" : fixture.home_score}
                         </Typography>
                       </Box>
                     </Box>
@@ -192,9 +192,9 @@ function FixturesPage() {
                       >
                         <Typography
                           variant="body2"
-                          sx={{ fontWeight: 800, color: '#7FC8A9' }}
+                          sx={{ fontWeight: 800, color: '#000000' }}
                         >
-                          -
+                          {fixture.status === "Upcoming" ? "-" : fixture.away_score}
                         </Typography>
                       </Box>
                       <Typography
