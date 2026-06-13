@@ -11,10 +11,11 @@ import {
   Chip
 } from '@mui/material';
 import Flag from 'react-world-flags';
-import { formatShortDate, formatShortTime } from '../utils/dateUtils'; // ✅ shared utils
+import { formatShortDate, formatShortTime } from '../utils/dateUtils';
 
 function ResultsEntryPage() {
   const [fixtures, setFixtures] = useState([]);
+  const [scoreInputs, setScoreInputs] = useState({});
 
   useEffect(() => {
     axios.get('/fixtures')
@@ -22,18 +23,37 @@ function ResultsEntryPage() {
       .catch(err => console.error(err));
   }, []);
 
-  const handleSubmit = (fixtureId, homeScore, awayScore) => {
+  const getFixtureDateTime = (fixture) => {
+    const datePart = fixture.match_date?.split('T')[0];
+    const timePart = fixture.match_time || '00:00:00';
+
+    return new Date(`${datePart}T${timePart}`);
+  };
+
+  const handleScoreChange = (fixtureId, field, value) => {
+    setScoreInputs(prev => ({
+      ...prev,
+      [fixtureId]: {
+        ...prev[fixtureId],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSubmit = (fixtureId) => {
+    const scores = scoreInputs[fixtureId] || {};
+
     axios.put(`/fixtures/${fixtureId}/result`, {
-      home_score: parseInt(homeScore, 10),
-      away_score: parseInt(awayScore, 10),
-      status: "Completed"
+      home_score: parseInt(scores.home_score, 10),
+      away_score: parseInt(scores.away_score, 10),
+      status: 'Completed'
     })
-    .then(res => {
-      setFixtures(prev =>
-        prev.map(f => f.id === fixtureId ? res.data : f)
-      );
-    })
-    .catch(err => console.error(err));
+      .then(res => {
+        setFixtures(prev =>
+          prev.map(f => (f.id === fixtureId ? res.data : f))
+        );
+      })
+      .catch(err => console.error(err));
   };
 
   const groupedByRound = fixtures.reduce((acc, fixture) => {
@@ -58,21 +78,17 @@ function ResultsEntryPage() {
               {round === 'UNASSIGNED' ? 'UNASSIGNED ROUND' : `ROUND ${round}`}
             </Typography>
           </Box>
+
           <Box sx={{ p: 3 }}>
             <List disablePadding sx={{ width: '100%' }}>
               {groupedByRound[round]
-                .sort((a, b) => new Date(`${a.match_date}T${a.match_time}`) - new Date(`${b.match_date}T${b.match_time}`))
+                .sort((a, b) => getFixtureDateTime(a) - getFixtureDateTime(b))
                 .map(fixture => {
-                  const fixtureDateTime = new Date(fixture.match_date); // ✅ ensure correct timezone parsing
+                  const fixtureDateTime = getFixtureDateTime(fixture);
                   const now = new Date();
                   const canSubmit = now >= fixtureDateTime;
-
-                  console.log("Fixture:", fixture.match_date, fixture.match_time);
-console.log("Parsed Date:", fixtureDateTime);
-console.log("Now:", now);
-console.log("Can Submit:", canSubmit);
-console.log("FixtureDateTime:", fixtureDateTime.toString());
-
+                  const scores = scoreInputs[fixture.id] || {};
+                  const hasScores = scores.home_score !== undefined && scores.away_score !== undefined;
 
                   return (
                     <ListItem
@@ -82,27 +98,26 @@ console.log("FixtureDateTime:", fixtureDateTime.toString());
                         flexDirection: 'column',
                         alignItems: 'stretch',
                         borderRadius: 2,
-                        background: fixture.status === "Completed"
+                        background: fixture.status === 'Completed'
                           ? 'linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 50%, #81c784 100%)'
                           : 'linear-gradient(135deg, #a8a8a8 0%, #7d9e93 50%, #6b8f84 100%)',
-                        color: fixture.status === "Completed" ? '#1b5e20' : 'inherit',
-                        boxShadow: fixture.status === "Completed" ? '0 0 10px rgba(27,94,32,0.4)' : 'none',
+                        color: fixture.status === 'Completed' ? '#1b5e20' : 'inherit',
+                        boxShadow: fixture.status === 'Completed' ? '0 0 10px rgba(27,94,32,0.4)' : 'none',
                         transition: 'background 0.3s ease',
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
-                        {/* Date */}
                         <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 110 }}>
                           {formatShortDate(fixture.match_date)}
                         </Typography>
 
-                        {/* Home team */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Flag code={fixture.home_flag} style={{ width: 26, height: 16 }} />
                           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                             {fixture.home_team}
                           </Typography>
-                          {fixture.status === "Completed" ? (
+
+                          {fixture.status === 'Completed' ? (
                             <Box sx={{ width: 40, textAlign: 'center', fontWeight: 800 }}>
                               {fixture.home_score}
                             </Box>
@@ -111,19 +126,18 @@ console.log("FixtureDateTime:", fixtureDateTime.toString());
                               type="number"
                               size="small"
                               sx={{ width: 50 }}
-                              onChange={(e) => fixture.home_score = e.target.value}
+                              value={scores.home_score || ''}
+                              onChange={(e) => handleScoreChange(fixture.id, 'home_score', e.target.value)}
                             />
                           )}
                         </Box>
 
-                        {/* vs */}
                         <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
                           vs
                         </Typography>
 
-                        {/* Away team */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {fixture.status === "Completed" ? (
+                          {fixture.status === 'Completed' ? (
                             <Box sx={{ width: 40, textAlign: 'center', fontWeight: 800 }}>
                               {fixture.away_score}
                             </Box>
@@ -132,30 +146,29 @@ console.log("FixtureDateTime:", fixtureDateTime.toString());
                               type="number"
                               size="small"
                               sx={{ width: 50 }}
-                              onChange={(e) => fixture.away_score = e.target.value}
+                              value={scores.away_score || ''}
+                              onChange={(e) => handleScoreChange(fixture.id, 'away_score', e.target.value)}
                             />
                           )}
+
                           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                             {fixture.away_team}
                           </Typography>
                           <Flag code={fixture.away_flag} style={{ width: 26, height: 16 }} />
                         </Box>
 
-                        {/* Time or FT */}
                         <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 70, textAlign: 'right' }}>
-                          {fixture.status === "Completed" ? "FT" : formatShortTime(fixture.match_time)}
+                          {fixture.status === 'Completed' ? 'FT' : formatShortTime(fixture.match_time)}
                         </Typography>
                       </Box>
 
-                      {/* Venue */}
                       {fixture.venue && (
                         <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
                           {fixture.venue}
                         </Typography>
                       )}
 
-                      {/* Completed badge */}
-                      {fixture.status === "Completed" && (
+                      {fixture.status === 'Completed' && (
                         <Chip
                           label="Completed"
                           color="success"
@@ -164,14 +177,13 @@ console.log("FixtureDateTime:", fixtureDateTime.toString());
                         />
                       )}
 
-                      {/* Submit button */}
-                      {fixture.status !== "Completed" && (
+                      {fixture.status !== 'Completed' && (
                         <Button
                           variant="contained"
                           color="primary"
                           sx={{ mt: 1, alignSelf: 'flex-end' }}
-                          disabled={!canSubmit}
-                          onClick={() => handleSubmit(fixture.id, fixture.home_score, fixture.away_score)}
+                          disabled={!canSubmit || !hasScores}
+                          onClick={() => handleSubmit(fixture.id)}
                         >
                           Submit Result
                         </Button>
