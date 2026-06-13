@@ -14,17 +14,10 @@ import {
 import Flag from 'react-world-flags';
 import axios from '../axiosConfig';
 
-const roleOrder = {
-  Favourite: 1,
-  Seeded: 2,
-  DarkHorse: 3,
-  Underdog: 4
-};
+const roleOrder = ['Favourite', 'Seeded', 'DarkHorse', 'Underdog'];
 
-const getOrderedMainSelections = (selections = []) => {
-  return selections
-    .filter(sel => roleOrder[sel.role])
-    .sort((a, b) => roleOrder[a.role] - roleOrder[b.role]);
+const getSelectionByRole = (selections = [], role) => {
+  return selections.find(sel => sel.role === role);
 };
 
 const OverallLeaderboard = () => {
@@ -75,7 +68,7 @@ const OverallLeaderboard = () => {
             </Box>
           ) : (
             <Box sx={{ overflowX: 'auto' }}>
-              <Table size="small" sx={{ minWidth: 720 }}>
+              <Table size="small" sx={{ minWidth: 980 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
@@ -85,7 +78,16 @@ const OverallLeaderboard = () => {
                       User
                     </TableCell>
                     <TableCell align="center" sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                      Teams & Points
+                      Favourite
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                      Seeded
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                      Dark Horse
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                      Underdog
                     </TableCell>
                     <TableCell align="center" sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
                       Points
@@ -97,49 +99,40 @@ const OverallLeaderboard = () => {
                 </TableHead>
 
                 <TableBody>
-                  {scores.map((user, index) => {
-                    const orderedSelections = getOrderedMainSelections(user.selections);
+                  {scores.map((user, index) => (
+                    <TableRow
+                      key={user.user_id}
+                      sx={{
+                        backgroundColor: index < 3 ? 'rgba(255,215,0,0.15)' : 'inherit'
+                      }}
+                    >
+                      <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                        {index + 1}
+                      </TableCell>
 
-                    return (
-                      <TableRow
-                        key={user.user_id}
-                        sx={{
-                          backgroundColor: index < 3 ? 'rgba(255,215,0,0.15)' : 'inherit'
-                        }}
-                      >
-                        <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                          {index + 1}
-                        </TableCell>
+                      <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                        {user.user_name}
+                      </TableCell>
 
-                        <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                          {user.user_name}
-                        </TableCell>
+                      {roleOrder.map(role => {
+                        const sel = getSelectionByRole(user.selections, role);
 
-                        <TableCell align="center" sx={{ color: '#fff', minWidth: 360 }}>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              flexWrap: 'wrap',
-                              gap: { xs: 0.75, md: 1 },
-                              py: 0.5
-                            }}
-                          >
-                            {orderedSelections.map(sel => (
+                        return (
+                          <TableCell key={role} align="center" sx={{ color: '#fff', minWidth: 170 }}>
+                            {sel ? (
                               <Box
-                                key={`${sel.role}-${sel.team_id}`}
-                                title={`${sel.role}: ${sel.team_name} - ${sel.points} pts`}
+                                title={`${role}: ${sel.team_name} - ${sel.points} pts`}
                                 sx={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
+                                  justifyContent: 'center',
                                   gap: 0.6,
                                   px: { xs: 0.75, md: 1 },
                                   py: { xs: 0.4, md: 0.55 },
                                   borderRadius: 1.5,
                                   backgroundColor: 'rgba(255,255,255,0.08)',
                                   border: '1px solid rgba(0,255,204,0.22)',
-                                  maxWidth: { xs: 150, md: 190 },
+                                  width: 160,
                                   whiteSpace: 'nowrap'
                                 }}
                               >
@@ -166,7 +159,9 @@ const OverallLeaderboard = () => {
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
                                     whiteSpace: 'nowrap',
-                                    minWidth: 0
+                                    minWidth: 0,
+                                    flex: 1,
+                                    textAlign: 'left'
                                   }}
                                 >
                                   {sel.team_name}
@@ -196,20 +191,30 @@ const OverallLeaderboard = () => {
                                   {sel.points}
                                 </Typography>
                               </Box>
-                            ))}
-                          </Box>
-                        </TableCell>
+                            ) : (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'rgba(255,255,255,0.45)',
+                                  fontSize: { xs: '0.65rem', md: '0.75rem' }
+                                }}
+                              >
+                                -
+                              </Typography>
+                            )}
+                          </TableCell>
+                        );
+                      })}
 
-                        <TableCell align="center" sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                          {user.total_points}
-                        </TableCell>
+                      <TableCell align="center" sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                        {user.total_points}
+                      </TableCell>
 
-                        <TableCell align="center" sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                          {user.total_goal_difference}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                      <TableCell align="center" sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                        {user.total_goal_difference}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </Box>
