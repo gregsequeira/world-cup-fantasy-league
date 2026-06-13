@@ -14,6 +14,19 @@ import {
 import Flag from 'react-world-flags';
 import axios from '../axiosConfig';
 
+const roleOrder = {
+  Favourite: 1,
+  Seeded: 2,
+  DarkHorse: 3,
+  Underdog: 4
+};
+
+const getOrderedMainSelections = (selections = []) => {
+  return selections
+    .filter(sel => roleOrder[sel.role])
+    .sort((a, b) => roleOrder[a.role] - roleOrder[b.role]);
+};
+
 const OverallLeaderboard = () => {
   const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -62,7 +75,7 @@ const OverallLeaderboard = () => {
             </Box>
           ) : (
             <Box sx={{ overflowX: 'auto' }}>
-              <Table size="small" sx={{ minWidth: 620 }}>
+              <Table size="small" sx={{ minWidth: 720 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
@@ -84,86 +97,119 @@ const OverallLeaderboard = () => {
                 </TableHead>
 
                 <TableBody>
-                  {scores.map((user, index) => (
-                    <TableRow
-                      key={user.user_id}
-                      sx={{
-                        backgroundColor: index < 3 ? 'rgba(255,215,0,0.15)' : 'inherit'
-                      }}
-                    >
-                      <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                        {index + 1}
-                      </TableCell>
+                  {scores.map((user, index) => {
+                    const orderedSelections = getOrderedMainSelections(user.selections);
 
-                      <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                        {user.user_name}
-                      </TableCell>
+                    return (
+                      <TableRow
+                        key={user.user_id}
+                        sx={{
+                          backgroundColor: index < 3 ? 'rgba(255,215,0,0.15)' : 'inherit'
+                        }}
+                      >
+                        <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                          {index + 1}
+                        </TableCell>
 
-                      <TableCell align="center" sx={{ color: '#fff', minWidth: 220 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: { xs: 0.75, md: 1 },
-                            py: 0.5
-                          }}
-                        >
-                          {user.selections?.map(sel => (
-                            <Box
-                              key={`${sel.role}-${sel.team_id}`}
-                              title={`${sel.team_name}: ${sel.points} pts`}
-                              sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 0.75,
-                                px: { xs: 0.75, md: 1 },
-                                py: { xs: 0.4, md: 0.55 },
-                                borderRadius: 1.5,
-                                backgroundColor: 'rgba(255,255,255,0.08)',
-                                border: '1px solid rgba(0,255,204,0.22)',
-                                minWidth: { xs: 54, md: 64 },
-                                justifyContent: 'center'
-                              }}
-                            >
-                              {sel.flag_code && (
-                                <Flag
-                                  code={sel.flag_code}
-                                  style={{
-                                    width: 30,
-                                    height: 20,
-                                    objectFit: 'cover',
-                                    borderRadius: 2,
-                                    boxShadow: '0 0 0 1px rgba(255,255,255,0.25)'
-                                  }}
-                                />
-                              )}
-                              <Typography
-                                variant="caption"
+                        <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                          {user.user_name}
+                        </TableCell>
+
+                        <TableCell align="center" sx={{ color: '#fff', minWidth: 360 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              flexWrap: 'wrap',
+                              gap: { xs: 0.75, md: 1 },
+                              py: 0.5
+                            }}
+                          >
+                            {orderedSelections.map(sel => (
+                              <Box
+                                key={`${sel.role}-${sel.team_id}`}
+                                title={`${sel.role}: ${sel.team_name} - ${sel.points} pts`}
                                 sx={{
-                                  color: '#fff',
-                                  fontWeight: 700,
-                                  fontSize: { xs: '0.72rem', md: '0.82rem' },
-                                  lineHeight: 1
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 0.6,
+                                  px: { xs: 0.75, md: 1 },
+                                  py: { xs: 0.4, md: 0.55 },
+                                  borderRadius: 1.5,
+                                  backgroundColor: 'rgba(255,255,255,0.08)',
+                                  border: '1px solid rgba(0,255,204,0.22)',
+                                  maxWidth: { xs: 150, md: 190 },
+                                  whiteSpace: 'nowrap'
                                 }}
                               >
-                                {sel.points}
-                              </Typography>
-                            </Box>
-                          ))}
-                        </Box>
-                      </TableCell>
+                                {sel.flag_code && (
+                                  <Flag
+                                    code={sel.flag_code}
+                                    style={{
+                                      width: 28,
+                                      height: 18,
+                                      objectFit: 'cover',
+                                      borderRadius: 2,
+                                      flexShrink: 0,
+                                      boxShadow: '0 0 0 1px rgba(255,255,255,0.25)'
+                                    }}
+                                  />
+                                )}
 
-                      <TableCell align="center" sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                        {user.total_points}
-                      </TableCell>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: '#fff',
+                                    fontSize: { xs: '0.62rem', md: '0.72rem' },
+                                    fontWeight: 600,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    minWidth: 0
+                                  }}
+                                >
+                                  {sel.team_name}
+                                </Typography>
 
-                      <TableCell align="center" sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                        {user.total_goal_difference}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: 'rgba(255,255,255,0.7)',
+                                    fontSize: { xs: '0.62rem', md: '0.72rem' },
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  -
+                                </Typography>
+
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: '#fff',
+                                    fontWeight: 800,
+                                    fontSize: { xs: '0.7rem', md: '0.82rem' },
+                                    lineHeight: 1,
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  {sel.points}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        </TableCell>
+
+                        <TableCell align="center" sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                          {user.total_points}
+                        </TableCell>
+
+                        <TableCell align="center" sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                          {user.total_goal_difference}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </Box>
