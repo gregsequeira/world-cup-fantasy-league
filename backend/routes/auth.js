@@ -207,13 +207,39 @@ router.get('/all-users', authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
-// Example Express route
+// Prize pool
 router.get('/prize-pool', async (req, res) => {
   try {
     const result = await pool.query(`SELECT COUNT(*) FROM users WHERE verified = true`);
     const count = parseInt(result.rows[0].count, 10);
     const prizePool = count * 200; // R200 per verified user
     res.json({ count, prizePool });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
+// --- NEW: Admin-only password reset route ---
+router.post('/admin-reset', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(newPassword, salt);
+
+    // Update DB
+    const result = await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE email = $2 RETURNING id, name, email, role, verified, contact_number',
+      [hash, email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ message: 'Password reset successfully', user: result.rows[0] });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server error');
