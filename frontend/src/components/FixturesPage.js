@@ -4,17 +4,21 @@ import { Box, Typography, List, ListItem, Paper } from '@mui/material';
 import Flag from 'react-world-flags';
 import { formatShortDate, formatShortTime } from '../utils/dateUtils';
 
-function FixturesPage() {
+function FixturesPage({ fixturesOverride }) {
   const [fixtures, setFixtures] = useState([]);
 
   useEffect(() => {
-    axios.get('/fixtures')
-      .then(res => setFixtures(res.data))
-      .catch(err => console.error(err));
-  }, []);
+    if (!fixturesOverride) {
+      axios.get('/fixtures')
+        .then(res => setFixtures(res.data))
+        .catch(err => console.error(err));
+    }
+  }, [fixturesOverride]);
+
+  const data = fixturesOverride || fixtures;
 
   // Group fixtures by round
-  const groupedByRound = fixtures.reduce((acc, fixture) => {
+  const groupedByRound = data.reduce((acc, fixture) => {
     const round = fixture.round || 'UNASSIGNED';
     if (!acc[round]) acc[round] = [];
     acc[round].push(fixture);
@@ -27,7 +31,7 @@ function FixturesPage() {
     return Number(a) - Number(b);
   });
 
-  return (
+    return (
     <Box
       sx={{
         p: { xs: 2, md: 3 },

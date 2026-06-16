@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
-import Homepage from './components/Homepage';
+// import Homepage from './components/Homepage';
 import Signup from './components/Signup';
 import Navbar from './components/Navbar';
 import DashboardPage from './components/DashboardPage';
@@ -11,6 +11,7 @@ import TeamsSelectionPage from './components/TeamsSelectionPage';
 import OverallLeaderboard from './components/OverallLeaderboard';
 import AdminDashboard from './components/AdminDashboard';
 import AdminUsers from './components/AdminUsers';
+import NewHomepage from './components/NewHomepage';
 
 // Optional: create a custom Material-UI theme for consistent styling
 const theme = createTheme({
@@ -47,7 +48,12 @@ function App() {
         {/* Page Routes */}
         <Routes>
   {/* Public routes */}
-  <Route path="/" element={<Homepage />} />
+  {/* Old homepage */}
+  {/*<Route path="/" element={<Homepage />} /> */}
+
+  {/* New homepage */}
+  <Route path="/" element={<NewHomepage />} />
+
   <Route path="/signup" element={<Signup />} />
   <Route path="/overall-leaderboard" element={<OverallLeaderboard />} />
 

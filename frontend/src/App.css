@@ -18,3 +18,25 @@ a {
 button {
   font-family: inherit;
 }
+
+.announcement-banner {
+  background-color: #f5f5f5;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.announcement-banner h2 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.announcement-banner ul {
+  list-style-type: disc;
+  margin: 10px auto;
+  padding: 0;
+  max-width: 400px;
+  text-align: left;
+}
