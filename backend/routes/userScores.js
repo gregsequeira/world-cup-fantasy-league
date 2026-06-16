@@ -19,9 +19,10 @@ router.get('/', async (req, res) => {
       SELECT
           u.id AS user_id,
           u.name AS user_name,
-          u.verified,  -- ✅ include verified flag
+          u.verified,
           COALESCE(SUM(
               CASE
+                  -- Group stage (rounds 1–3)
                   WHEN f.status = 'Completed' AND f.round::integer <= 3 AND sel.role IN ('Favourite','Underdog') THEN
                     CASE
                       WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 6
@@ -36,16 +37,16 @@ router.get('/', async (req, res) => {
                       WHEN (sel.team_id = f.home_team_id OR sel.team_id = f.away_team_id) AND f.home_score = f.away_score THEN 1
                       ELSE 0
                     END
+
+                  -- Knockout stage (rounds ≥ 4) → use winner_team_id
                   WHEN f.status = 'Completed' AND f.round::integer >= 4 AND sel.role = 'KOFavourite' THEN
                     CASE
-                      WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 6
-                      WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 6
+                      WHEN sel.team_id = f.winner_team_id THEN 6
                       ELSE 0
                     END
                   WHEN f.status = 'Completed' AND f.round::integer >= 4 THEN
                     CASE
-                      WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 3
-                      WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 3
+                      WHEN sel.team_id = f.winner_team_id THEN 3
                       ELSE 0
                     END
                   ELSE 0
@@ -53,6 +54,7 @@ router.get('/', async (req, res) => {
           ), 0) AS total_points,
           COALESCE(SUM(
               CASE
+                -- GD always based on actual goals, not penalties
                 WHEN f.status = 'Completed' AND sel.team_id = f.home_team_id THEN f.home_score - f.away_score
                 WHEN f.status = 'Completed' AND sel.team_id = f.away_team_id THEN f.away_score - f.home_score
                 ELSE 0
@@ -116,6 +118,7 @@ router.get('/details', async (req, res) => {
           sel.team_id,
           SUM(
             CASE
+              -- Group stage (rounds 1–3)
               WHEN f.status = 'Completed' AND f.round::integer <= 3 AND sel.role IN ('Favourite','Underdog') THEN
                 CASE
                   WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 6
@@ -130,16 +133,16 @@ router.get('/details', async (req, res) => {
                   WHEN (sel.team_id = f.home_team_id OR sel.team_id = f.away_team_id) AND f.home_score = f.away_score THEN 1
                   ELSE 0
                 END
+
+              -- Knockout stage (rounds ≥ 4) → use winner_team_id
               WHEN f.status = 'Completed' AND f.round::integer >= 4 AND sel.role = 'KOFavourite' THEN
                 CASE
-                  WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 6
-                  WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 6
+                  WHEN sel.team_id = f.winner_team_id THEN 6
                   ELSE 0
                 END
               WHEN f.status = 'Completed' AND f.round::integer >= 4 THEN
                 CASE
-                  WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 3
-                  WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 3
+                  WHEN sel.team_id = f.winner_team_id THEN 3
                   ELSE 0
                 END
               ELSE 0
@@ -147,6 +150,7 @@ router.get('/details', async (req, res) => {
           ) AS points,
           SUM(
             CASE
+              -- GD always from actual goals
               WHEN f.status = 'Completed' AND sel.team_id = f.home_team_id THEN f.home_score - f.away_score
               WHEN f.status = 'Completed' AND sel.team_id = f.away_team_id THEN f.away_score - f.home_score
               ELSE 0
@@ -212,6 +216,7 @@ router.get('/:userId', async (req, res) => {
           u.name AS user_name,
           COALESCE(SUM(
               CASE
+                  -- Group stage (rounds 1–3)
                   WHEN f.status = 'Completed' AND f.round::integer <= 3 AND sel.role IN ('Favourite','Underdog') THEN
                     CASE
                       WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 6
@@ -226,16 +231,16 @@ router.get('/:userId', async (req, res) => {
                       WHEN (sel.team_id = f.home_team_id OR sel.team_id = f.away_team_id) AND f.home_score = f.away_score THEN 1
                       ELSE 0
                     END
+
+                  -- Knockout stage (rounds ≥ 4) → use winner_team_id
                   WHEN f.status = 'Completed' AND f.round::integer >= 4 AND sel.role = 'KOFavourite' THEN
                     CASE
-                      WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 6
-                      WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 6
+                      WHEN sel.team_id = f.winner_team_id THEN 6
                       ELSE 0
                     END
                   WHEN f.status = 'Completed' AND f.round::integer >= 4 THEN
                     CASE
-                      WHEN sel.team_id = f.home_team_id AND f.home_score > f.away_score THEN 3
-                      WHEN sel.team_id = f.away_team_id AND f.away_score > f.home_score THEN 3
+                      WHEN sel.team_id = f.winner_team_id THEN 3
                       ELSE 0
                     END
                   ELSE 0
@@ -243,6 +248,7 @@ router.get('/:userId', async (req, res) => {
           ), 0) AS total_points,
           COALESCE(SUM(
               CASE
+                -- GD always based on actual goals, not penalties
                 WHEN f.status = 'Completed' AND sel.team_id = f.home_team_id THEN f.home_score - f.away_score
                 WHEN f.status = 'Completed' AND sel.team_id = f.away_team_id THEN f.away_score - f.home_score
                 ELSE 0
