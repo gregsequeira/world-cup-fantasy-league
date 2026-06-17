@@ -103,7 +103,7 @@ const OverallLeaderboard = () => {
                     <TableRow
                       key={user.user_id}
                       sx={{
-                        backgroundColor: index < 3 ? 'rgba(255,215,0,0.15)' : 'inherit'
+                        backgroundColor: index === 0 ? 'rgba(231, 198, 8, 0.45)' : 'inherit'
                       }}
                     >
                       <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
