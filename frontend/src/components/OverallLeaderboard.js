@@ -132,25 +132,25 @@ const OverallLeaderboard = () => {
                           backgroundColor: isLeader ? 'rgba(231, 198, 8, 0.45)' : 'inherit'
                         }}
                       >
-                        <TableCell
-                          sx={{
-                            color: '#fff',
-                            fontSize: { xs: '0.75rem', md: '0.85rem' },
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5
-                          }}
-                        >
-                          {index + 1}
-                          {isLeader && (
-                            <EmojiEventsIcon
-                              sx={{
-                                fontSize: '1rem',
-                                color: '#facc15',
-                                verticalAlign: 'middle'
-                              }}
-                            />
-                          )}
+                        <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                          <Box
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              minWidth: 34
+                            }}
+                          >
+                            <span>{index + 1}</span>
+                            {isLeader && (
+                              <EmojiEventsIcon
+                                sx={{
+                                  fontSize: '1rem',
+                                  color: '#facc15'
+                                }}
+                              />
+                            )}
+                          </Box>
                         </TableCell>
 
                         <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
