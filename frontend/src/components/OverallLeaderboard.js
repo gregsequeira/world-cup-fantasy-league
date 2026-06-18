@@ -36,10 +36,9 @@ const OverallLeaderboard = () => {
   }, []);
 
   const maxPoints = Math.max(...scores.map(u => u.total_points));
-const maxGD = Math.max(...scores
-  .filter(u => u.total_points === maxPoints)
-  .map(u => u.total_goal_difference)
-);
+const leaders = scores.filter(u => u.total_points === maxPoints);
+const maxGD = Math.max(...leaders.map(u => u.total_goal_difference));
+
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
