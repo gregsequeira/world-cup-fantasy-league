@@ -12,13 +12,18 @@ import {
   Box
 } from '@mui/material';
 import Flag from 'react-world-flags';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'; // Trophy icon
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import axios from '../axiosConfig';
 
 const roleOrder = ['Favourite', 'Seeded', 'DarkHorse', 'Underdog'];
 
 const getSelectionByRole = (selections = [], role) => {
   return selections.find(sel => sel.role === role);
+};
+
+const toNumber = (value) => {
+  const number = Number(value);
+  return Number.isNaN(number) ? 0 : number;
 };
 
 const OverallLeaderboard = () => {
@@ -29,19 +34,32 @@ const OverallLeaderboard = () => {
     setLoading(true);
     axios.get('/user-scores/details')
       .then(res => {
-        const verified = res.data.filter(u => u.verified);
+        const verified = res.data
+          .filter(u => u.verified)
+          .sort((a, b) => {
+            const pointsDiff = toNumber(b.total_points) - toNumber(a.total_points);
+            if (pointsDiff !== 0) return pointsDiff;
+
+            return toNumber(b.total_goal_difference) - toNumber(a.total_goal_difference);
+          });
+
         setScores(verified);
       })
       .catch(() => setScores([]))
       .finally(() => setLoading(false));
   }, []);
 
-  // Find the maximum points
-  const maxPoints = scores.length > 0 ? Math.max(...scores.map(u => u.total_points)) : 0;
+  const maxPoints = scores.length > 0
+    ? Math.max(...scores.map(user => toNumber(user.total_points)))
+    : 0;
 
-  // Among those with max points, find the maximum GD
-  const leaders = scores.filter(u => u.total_points === maxPoints);
-  const maxGD = leaders.length > 0 ? Math.max(...leaders.map(u => u.total_goal_difference)) : 0;
+  const maxGD = scores.length > 0
+    ? Math.max(
+        ...scores
+          .filter(user => toNumber(user.total_points) === maxPoints)
+          .map(user => toNumber(user.total_goal_difference))
+      )
+    : 0;
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
@@ -85,11 +103,13 @@ const OverallLeaderboard = () => {
                     <TableCell sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
                       User
                     </TableCell>
+
                     {roleOrder.map(role => (
                       <TableCell key={role} align="center" sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
                         {role}
                       </TableCell>
                     ))}
+
                     <TableCell align="center" sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
                       Points
                     </TableCell>
@@ -101,9 +121,9 @@ const OverallLeaderboard = () => {
 
                 <TableBody>
                   {scores.map((user, index) => {
-                    const isLeader =
-                      user.total_points === maxPoints &&
-                      user.total_goal_difference === maxGD;
+                    const userPoints = toNumber(user.total_points);
+                    const userGD = toNumber(user.total_goal_difference);
+                    const isLeader = userPoints === maxPoints && userGD === maxGD;
 
                     return (
                       <TableRow
@@ -112,7 +132,15 @@ const OverallLeaderboard = () => {
                           backgroundColor: isLeader ? 'rgba(231, 198, 8, 0.45)' : 'inherit'
                         }}
                       >
-                        <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' }, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <TableCell
+                          sx={{
+                            color: '#fff',
+                            fontSize: { xs: '0.75rem', md: '0.85rem' },
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5
+                          }}
+                        >
                           {index + 1}
                           {isLeader && (
                             <EmojiEventsIcon
@@ -222,11 +250,11 @@ const OverallLeaderboard = () => {
                         })}
 
                         <TableCell align="center" sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                          {user.total_points}
+                          {userPoints}
                         </TableCell>
 
                         <TableCell align="center" sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
-                          {user.total_goal_difference}
+                          {userGD}
                         </TableCell>
                       </TableRow>
                     );
