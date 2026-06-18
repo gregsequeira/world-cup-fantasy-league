@@ -106,15 +106,15 @@ const maxGD = Math.max(...leaders.map(u => u.total_goal_difference));
                 <TableBody>
                   {scores.map((user, index) => (
                     <TableRow
-  key={user.user_id}
-  sx={{
-    backgroundColor:
-      user.total_points === maxPoints &&
-      user.total_goal_difference === maxGD
-        ? 'rgba(231, 198, 8, 0.45)'
-        : 'inherit'
-  }}
->
+                      key={user.user_id}
+                      sx={{
+                            backgroundColor:
+                            user.total_points === maxPoints &&
+                            user.total_goal_difference === maxGD
+                            ? 'rgba(231, 198, 8, 0.45)'
+                            : 'inherit'
+                           }}
+                      >
                       <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
                         {index + 1}
                       </TableCell>
