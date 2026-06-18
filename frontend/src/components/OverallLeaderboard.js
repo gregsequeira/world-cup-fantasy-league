@@ -35,6 +35,12 @@ const OverallLeaderboard = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  const maxPoints = Math.max(...scores.map(u => u.total_points));
+const maxGD = Math.max(...scores
+  .filter(u => u.total_points === maxPoints)
+  .map(u => u.total_goal_difference)
+);
+
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
       <Card
@@ -101,11 +107,15 @@ const OverallLeaderboard = () => {
                 <TableBody>
                   {scores.map((user, index) => (
                     <TableRow
-                      key={user.user_id}
-                      sx={{
-                        backgroundColor: index === 0 ? 'rgba(231, 198, 8, 0.45)' : 'inherit'
-                      }}
-                    >
+  key={user.user_id}
+  sx={{
+    backgroundColor:
+      user.total_points === maxPoints &&
+      user.total_goal_difference === maxGD
+        ? 'rgba(231, 198, 8, 0.45)'
+        : 'inherit'
+  }}
+>
                       <TableCell sx={{ color: '#fff', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
                         {index + 1}
                       </TableCell>
