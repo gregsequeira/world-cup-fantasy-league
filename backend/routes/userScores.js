@@ -155,7 +155,10 @@ router.get('/details', async (req, res) => {
               WHEN f.status = 'Completed' AND sel.team_id = f.away_team_id THEN f.away_score - f.home_score
               ELSE 0
             END
-          ) AS goal_difference
+          ) AS goal_difference,
+          MAX(f.decided_by) AS decided_by,
+          MAX(f.penalty_home) AS penalty_home,
+          MAX(f.penalty_away) AS penalty_away
         FROM selections sel
         LEFT JOIN fixtures f
           ON sel.team_id = f.home_team_id
@@ -176,7 +179,10 @@ router.get('/details', async (req, res) => {
               'team_name', t.name,
               'flag_code', t.flag_code,
               'points', COALESCE(tp.points, 0),
-              'goal_difference', COALESCE(tp.goal_difference, 0)
+              'goal_difference', COALESCE(tp.goal_difference, 0),
+              'decided_by', tp.decided_by,
+              'penalty_home', tp.penalty_home,
+              'penalty_away', tp.penalty_away
             )
             ORDER BY tp.role
           ) FILTER (WHERE t.id IS NOT NULL),
@@ -273,3 +279,5 @@ router.get('/:userId', async (req, res) => {
 });
 
 module.exports = router;
+
+
