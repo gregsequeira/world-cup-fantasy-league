@@ -12,7 +12,9 @@ import AdminDashboard from './components/AdminDashboard';
 import AdminUsers from './components/AdminUsers';
 import NewHomepage from './components/NewHomepage';
 
-// Optional: create a custom Material-UI theme for consistent styling
+// ✅ Import KnockoutSelectionsPage from components folder
+import KnockoutSelectionsPage from './components/KnockoutSelectionsPage';
+
 const theme = createTheme({
   palette: {
     primary: {
@@ -41,59 +43,72 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        {/* Navbar is always visible */}
         <Navbar />
 
-        {/* Page Routes */}
         <Routes>
-  {/* Public routes */}
-  {/* Old homepage */}
-  {/*<Route path="/" element={<Homepage />} /> */}
+          {/* Public routes */}
+          <Route path="/" element={<NewHomepage />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/overall-leaderboard" element={<OverallLeaderboard />} />
 
-  {/* New homepage */}
-  <Route path="/" element={<NewHomepage />} />
+          {/* Knockout selections: logged-in users only */}
+          <Route
+            path="/knockout"
+            element={
+              <ProtectedRoute>
+                <KnockoutSelectionsPage />
+              </ProtectedRoute>
+            }
+          />
 
-  <Route path="/signup" element={<Signup />} />
-  <Route path="/overall-leaderboard" element={<OverallLeaderboard />} />
+          {/* Dashboard: any logged-in user */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
 
-  {/* Dashboard: any logged-in user */}
-  <Route path="/dashboard" element={
-    <ProtectedRoute>
-      <DashboardPage />
-    </ProtectedRoute>
-  } />
+          {/* Teams selection */}
+          <Route
+            path="/teams"
+            element={
+              <ProtectedRoute>
+                <TeamsSelectionPage />
+              </ProtectedRoute>
+            }
+          />
 
-  {/* Teams selection: open to all logged-in users (no verification required) */}
-  <Route path="/teams" element={
-    <ProtectedRoute>
-      <TeamsSelectionPage />
-    </ProtectedRoute>
-  } />
+          {/* Results entry: only Admin */}
+          <Route
+            path="/results"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <ResultsEntryPage />
+              </ProtectedRoute>
+            }
+          />
 
-  {/* Results entry: only Admin */}
-  <Route path="/results" element={
-    <ProtectedRoute requiredRole="admin">
-      <ResultsEntryPage />
-    </ProtectedRoute>
-  } />
-
-  {/* Admin routes: only Admin */}
-  <Route path="/admin" element={
-    <ProtectedRoute requiredRole="admin">
-      <AdminDashboard />
-    </ProtectedRoute>
-  } />
-  <Route path="/admin/users" element={
-    <ProtectedRoute requiredRole="admin">
-      <AdminUsers />
-    </ProtectedRoute>
-  } />
-
-  {/* Future routes */}
-  {/* <Route path="/profile" element={<Profile />} /> */}
-  {/* <Route path="/leaderboard" element={<Leaderboard />} /> */}
-</Routes>
-
+          {/* Admin routes */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
       </Router>
     </ThemeProvider>
   );

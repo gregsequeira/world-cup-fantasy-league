@@ -5,6 +5,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 // Utility: knockout cutoff check
 async function isBeforeKnockoutCutoff() {
+  // Ideally load this from config or DB for flexibility
   const cutoff = new Date('2026-06-28T19:00:00+02:00'); // South Africa time (UTC+2)
   return new Date() < cutoff;
 }
@@ -34,7 +35,16 @@ router.post('/select', authMiddleware, async (req, res) => {
       [req.userId, koFavouriteId || null, ko1Id || null, ko2Id || null, ko3Id || null]
     );
 
-    res.json({ message: 'Knockout teams selected successfully' });
+    // Fetch updated selection to return immediately
+    const updated = await pool.query(
+      `SELECT * FROM user_knockout_selections WHERE user_id=$1`,
+      [req.userId]
+    );
+
+    res.json({
+      message: 'Knockout teams selected successfully',
+      selection: updated.rows[0] || {}
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server error');
@@ -68,7 +78,11 @@ router.get('/my', authMiddleware, async (req, res) => {
       [userId]
     );
 
-    res.json(result.rows[0] || {});
+    if (result.rows.length === 0) {
+      return res.json({ message: 'No knockout selections yet' });
+    }
+
+    res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch knockout teams' });

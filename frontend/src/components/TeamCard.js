@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, Typography, Divider, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, Chip, Divider } from '@mui/material';
 import Flag from 'react-world-flags';
 import axios from '../axiosConfig';
 import { formatDayMonth, formatShortTime } from '../utils/dateUtils';
@@ -19,149 +19,315 @@ export const TeamCard = ({ label, team }) => {
     setLoadingStats(true);
     axios.get(`/standings/${team.id}`)
       .then(res => {
-        let s = res.data;
+        const updatedStats = { ...res.data };
+
         if (label.toLowerCase().includes('favourite') || label.toLowerCase().includes('underdog')) {
-          s.points = s.points * 2;
+          updatedStats.points = updatedStats.points * 2;
         }
-        setStats(s);
+
+        setStats(updatedStats);
       })
       .catch(() => setStats({ points: 0, goal_difference: 0, goals_for: 0, goals_against: 0 }))
       .finally(() => setLoadingStats(false));
   }, [team?.id, label]);
 
+  const isBoosted = label.toLowerCase().includes('favourite') || label.toLowerCase().includes('underdog');
+
+  const isFixtureCompleted = (fixture) => {
+    const statusCompleted = String(fixture.status || '').trim().toLowerCase() === 'completed';
+    const hasScores = fixture.home_score !== null && fixture.home_score !== undefined
+      && fixture.away_score !== null && fixture.away_score !== undefined;
+
+    return statusCompleted || hasScores;
+  };
+
+  const getFixtureDisplay = (fixture) => {
+    if (isFixtureCompleted(fixture)) {
+      return `${fixture.home_team} ${fixture.home_score} - ${fixture.away_score} ${fixture.away_team}`;
+    }
+
+    return `${fixture.home_team} vs ${fixture.away_team}`;
+  };
+
   return (
-    <Box
+    <Card
+      elevation={0}
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
         width: '100%',
-        maxWidth: { xs: '100%', sm: 360 },
-        mx: 'auto',
-        mb: 3
+        minHeight: 430,
+        borderRadius: 2,
+        textAlign: 'center',
+        overflow: 'hidden',
+        position: 'relative',
+        background: isBoosted
+          ? 'linear-gradient(145deg, rgba(255,248,225,0.98) 0%, rgba(217,251,232,0.96) 60%, rgba(255,255,255,0.92) 100%)'
+          : 'linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(232,245,233,0.88) 56%, rgba(217,251,232,0.76) 100%)',
+        border: isBoosted
+          ? '1px solid rgba(245,158,11,0.62)'
+          : '1px solid rgba(217,251,232,0.42)',
+        boxShadow: '0 14px 32px rgba(15,23,42,0.16), inset 0 1px 0 rgba(255,255,255,0.58)',
       }}
     >
-      {/* Team Card */}
-      <Card
+      <Box
         sx={{
-          width: '100%',
-          boxShadow: 4,
-          borderRadius: 3,
-          textAlign: 'center',
-          border: '2px solid #7FC8A9',
-          background: 'linear-gradient(135deg, rgba(168,168,168,0.85) 0%, rgba(125,158,147,0.85) 50%, rgba(107,143,132,0.85) 100%)',
-          backdropFilter: 'blur(6px)',
+          height: 54,
+          background: isBoosted
+            ? 'linear-gradient(135deg, #b45309 0%, #f59e0b 42%, #1b5e20 100%)'
+            : 'linear-gradient(135deg, #0f3d2e 0%, #0f766e 46%, #1b5e20 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: 1,
         }}
       >
-        <CardContent>
-          <Typography
-            variant="subtitle1"
-            sx={{ fontWeight: 'bold', mb: 1, fontSize: { xs: '0.9rem', md: '1rem' } }}
-          >
-            {label}
-          </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: '#fff',
+            fontWeight: 900,
+            textTransform: 'uppercase',
+            letterSpacing: 0,
+          }}
+        >
+          {label}
+        </Typography>
+      </Box>
+
+      <CardContent
+        sx={{
+          px: 2,
+          pt: 0,
+          pb: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <Box
+          sx={{
+            mt: -1.25,
+            mb: 1.25,
+            p: 0.55,
+            borderRadius: 1.5,
+            background: 'rgba(255,255,255,0.86)',
+            boxShadow: '0 10px 22px rgba(15,23,42,0.18)',
+            border: isBoosted
+              ? '1px solid rgba(245,158,11,0.42)'
+              : '1px solid rgba(27,94,32,0.16)',
+          }}
+        >
           {team.flag_code && (
             <Flag
               code={team.flag_code}
-              style={{ width: 60, height: 40, marginBottom: 8 }}
+              style={{
+                width: 72,
+                height: 48,
+                borderRadius: 4,
+                display: 'block',
+                objectFit: 'cover',
+              }}
             />
           )}
-          <Typography
-            variant="body1"
-            sx={{ fontWeight: 'bold', fontSize: { xs: '0.95rem', md: '1rem' } }}
-          >
-            {team.name}
-          </Typography>
-          <Divider sx={{ my: 1, width: '80%' }} />
+        </Box>
+
+        <Chip
+          label={isBoosted ? 'Double Points' : 'Standard Points'}
+          size="small"
+          sx={{
+            mb: 1,
+            height: 22,
+            borderRadius: 1.25,
+            backgroundColor: isBoosted ? '#fff3cd' : '#d9fbe8',
+            color: isBoosted ? '#8a5a00' : '#12372a',
+            fontWeight: 900,
+            fontSize: '0.68rem',
+          }}
+        />
+
+        <Typography
+          title={team.name}
+          sx={{
+            fontWeight: 950,
+            color: '#12372a',
+            mb: 0.75,
+            fontSize: '1.05rem',
+            lineHeight: 1.15,
+            maxWidth: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {team.name}
+        </Typography>
+
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 0.75,
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            mb: 1.5,
+          }}
+        >
           {team.ranking && (
-            <Typography variant="body2" color="text.secondary">
-              Ranking: {team.ranking}
-            </Typography>
+            <Chip
+              label={`Rank ${team.ranking}`}
+              size="small"
+              sx={{
+                borderRadius: 1.25,
+                backgroundColor: 'rgba(15,118,110,0.10)',
+                color: '#12372a',
+                fontWeight: 850,
+              }}
+            />
           )}
+
           {team.group_name && (
-            <Typography variant="body2" color="text.secondary">
-              {team.group_name}
-            </Typography>
+            <Chip
+              label={team.group_name}
+              size="small"
+              sx={{
+                borderRadius: 1.25,
+                backgroundColor: 'rgba(27,94,32,0.10)',
+                color: '#12372a',
+                fontWeight: 850,
+              }}
+            />
           )}
+        </Box>
 
-          {/* Fixtures */}
-          <Divider sx={{ my: 2 }} />
-          <Typography
-            variant="subtitle2"
-            sx={{ fontWeight: 'bold', mb: 1, fontSize: { xs: '0.85rem', md: '0.95rem' } }}
-          >
-            Fixtures
-          </Typography>
-          {fixtures && fixtures.map(f => (
-            <Box key={f.id} sx={{ mb: 0.5 }}>
-              <Typography
-                variant="body2"
-                sx={{ fontSize: { xs: '0.75rem', md: '0.85rem' }, lineHeight: 1.2 }}
-              >
-                {formatDayMonth(f.match_date)} {f.home_team} vs {f.away_team} {formatShortTime(f.match_time)}
-              </Typography>
-            </Box>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Stats Card */}
-      <Card
-        sx={{
-          width: '100%',
-          mt: 1.5,
-          boxShadow: 6,
-          borderRadius: 3,
-          textAlign: 'center',
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-          color: '#fff',
-          border: '2px solid #00FFCC',
-        }}
-      >
-        <CardContent>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontWeight: 'bold',
-              mb: 1,
-              color: '#00FFCC',
-              fontSize: { xs: '0.9rem', md: '1rem' }
-            }}
-          >
-            Stats
-          </Typography>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 0.75,
+            width: '100%',
+            mb: 2,
+          }}
+        >
           {loadingStats ? (
-            <Typography variant="body2">Loading stats...</Typography>
+            <Chip
+              label="Loading stats..."
+              size="small"
+              sx={{
+                gridColumn: '1 / -1',
+                borderRadius: 1.25,
+                backgroundColor: 'rgba(15,118,110,0.10)',
+                color: '#12372a',
+                fontWeight: 850,
+              }}
+            />
           ) : (
             <>
-              <Typography
-                variant="body1"
-                sx={{ fontWeight: 'bold', color: '#00FFCC', fontSize: { xs: '0.95rem', md: '1rem' } }}
-              >
-                Points: {stats?.points}
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{ fontWeight: 'bold', color: '#facc15', fontSize: { xs: '0.95rem', md: '1rem' } }}
-              >
-                Goal Difference: {stats?.goal_difference}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: '#f3f4f6', fontSize: { xs: '0.8rem', md: '0.9rem' } }}
-              >
-                Goals For: {stats?.goals_for}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: '#f3f4f6', fontSize: { xs: '0.8rem', md: '0.9rem' } }}
-              >
-                Goals Against: {stats?.goals_against}
-              </Typography>
+              <Chip label={`Pts ${stats?.points ?? 0}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(15,118,110,0.12)', color: '#12372a', fontWeight: 900 }} />
+              <Chip label={`GD ${stats?.goal_difference ?? 0}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(245,158,11,0.12)', color: '#6b3f00', fontWeight: 900 }} />
+              <Chip label={`GF ${stats?.goals_for ?? 0}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(27,94,32,0.10)', color: '#12372a', fontWeight: 850 }} />
+              <Chip label={`GA ${stats?.goals_against ?? 0}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(180,83,9,0.10)', color: '#6b3f00', fontWeight: 850 }} />
             </>
           )}
-        </CardContent>
-      </Card>
-    </Box>
+        </Box>
+
+        <Divider sx={{ width: '100%', mb: 1.5, borderColor: 'rgba(27,94,32,0.16)' }} />
+
+        <Typography
+          variant="caption"
+          sx={{
+            mb: 1,
+            color: '#0f3d2e',
+            fontWeight: 900,
+            textTransform: 'uppercase',
+          }}
+        >
+          Fixtures
+        </Typography>
+
+        <Box
+          sx={{
+            width: '100%',
+            display: 'grid',
+            gap: 0.75,
+          }}
+        >
+          {fixtures === null ? (
+            <Typography variant="body2" sx={{ color: '#60756b', fontWeight: 700 }}>
+              Loading fixtures...
+            </Typography>
+          ) : fixtures.length > 0 ? (
+            fixtures.map(fixture => {
+              const completed = isFixtureCompleted(fixture);
+
+              return (
+                <Box
+                  key={fixture.id}
+                  sx={{
+                    p: 0.85,
+                    borderRadius: 1.25,
+                    background: completed
+                      ? 'linear-gradient(135deg, rgba(217,251,232,0.72) 0%, rgba(255,243,205,0.44) 100%)'
+                      : 'rgba(255,255,255,0.48)',
+                    border: completed
+                      ? '1px solid rgba(15,118,110,0.20)'
+                      : '1px solid rgba(27,94,32,0.10)',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: 0.75,
+                      flexWrap: 'wrap',
+                      mb: 0.35,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#375448',
+                        fontWeight: 750,
+                        fontSize: { xs: '0.74rem', md: '0.8rem' },
+                        lineHeight: 1.25,
+                      }}
+                    >
+                      {formatDayMonth(fixture.match_date)}
+                    </Typography>
+
+                    <Chip
+                      label={completed ? 'FT' : formatShortTime(fixture.match_time)}
+                      size="small"
+                      sx={{
+                        height: 20,
+                        borderRadius: 1,
+                        backgroundColor: completed ? '#d9fbe8' : '#fff3cd',
+                        color: completed ? '#12372a' : '#8a5a00',
+                        fontWeight: 900,
+                        fontSize: '0.62rem',
+                      }}
+                    />
+                  </Box>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: '#12372a',
+                      fontWeight: 900,
+                      fontSize: { xs: '0.76rem', md: '0.84rem' },
+                      lineHeight: 1.25,
+                    }}
+                  >
+                    {getFixtureDisplay(fixture)}
+                  </Typography>
+                </Box>
+              );
+            })
+          ) : (
+            <Typography variant="body2" sx={{ color: '#60756b', fontWeight: 700 }}>
+              No fixtures found.
+            </Typography>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
