@@ -11,8 +11,7 @@ import OverallLeaderboard from './components/OverallLeaderboard';
 import AdminDashboard from './components/AdminDashboard';
 import AdminUsers from './components/AdminUsers';
 import NewHomepage from './components/NewHomepage';
-
-// ✅ Import KnockoutSelectionsPage from components folder
+import KnockoutResultsPage from './components/KnockoutResultsPage';
 import KnockoutSelectionsPage from './components/KnockoutSelectionsPage';
 
 const theme = createTheme({
@@ -90,6 +89,11 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+  path="/knockout-results"
+  element={<KnockoutResultsPage />}
+/>
 
           {/* Admin routes */}
           <Route

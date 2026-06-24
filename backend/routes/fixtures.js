@@ -2,6 +2,53 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db'); // pg Pool
 
+const nextFixtureMap = {
+  73: { fixtureId: 89, slot: 'home' },
+  75: { fixtureId: 89, slot: 'away' },
+
+  74: { fixtureId: 90, slot: 'home' },
+  77: { fixtureId: 90, slot: 'away' },
+
+  76: { fixtureId: 91, slot: 'home' },
+  78: { fixtureId: 91, slot: 'away' },
+
+  79: { fixtureId: 92, slot: 'home' },
+  80: { fixtureId: 92, slot: 'away' },
+
+  83: { fixtureId: 93, slot: 'home' },
+  84: { fixtureId: 93, slot: 'away' },
+
+  81: { fixtureId: 94, slot: 'home' },
+  82: { fixtureId: 94, slot: 'away' },
+
+  86: { fixtureId: 95, slot: 'home' },
+  88: { fixtureId: 95, slot: 'away' },
+
+  85: { fixtureId: 96, slot: 'home' },
+  87: { fixtureId: 96, slot: 'away' },
+
+  89: { fixtureId: 97, slot: 'home' },
+  90: { fixtureId: 97, slot: 'away' },
+
+  91: { fixtureId: 99, slot: 'home' },
+  92: { fixtureId: 99, slot: 'away' },
+
+  93: { fixtureId: 98, slot: 'home' },
+  94: { fixtureId: 98, slot: 'away' },
+
+  95: { fixtureId: 100, slot: 'home' },
+  96: { fixtureId: 100, slot: 'away' },
+
+  97: { fixtureId: 101, slot: 'home' },
+  98: { fixtureId: 101, slot: 'away' },
+
+  99: { fixtureId: 102, slot: 'home' },
+  100: { fixtureId: 102, slot: 'away' },
+
+  101: { fixtureId: 104, slot: 'home' },
+  102: { fixtureId: 104, slot: 'away' },
+};
+
 // Get all fixtures
 router.get('/', async (req, res) => {
   try {
@@ -89,13 +136,13 @@ router.post('/', async (req, res) => {
 // Update fixture result (handles penalties + winner assignment)
 router.put('/:id/result', async (req, res) => {
   try {
-    const { id } = req.params;
+    const fixtureId = parseInt(req.params.id, 10);
     const { home_score, away_score, penalty_home, penalty_away, status } = req.body;
 
     // Fetch current fixture to get team IDs
     const fixture = await pool.query(
       'SELECT home_team_id, away_team_id FROM fixtures WHERE id=$1',
-      [id]
+      [fixtureId]
     );
     if (fixture.rows.length === 0) {
       return res.status(404).send('Fixture not found');
@@ -126,8 +173,30 @@ router.put('/:id/result', async (req, res) => {
            status=$5, winner_team_id=$6, decided_by=$7
        WHERE id=$8 RETURNING *`,
       [home_score, away_score, penalty_home, penalty_away,
-       status, winner_team_id, decided_by, id]
+       status, winner_team_id, decided_by, fixtureId]
     );
+
+    const nextMatch = nextFixtureMap[fixtureId];
+
+if (
+  status === 'Completed' &&
+  nextMatch &&
+  winner_team_id
+) {
+  const field =
+    nextMatch.slot === 'home'
+      ? 'home_team_id'
+      : 'away_team_id';
+  await pool.query(
+  `UPDATE fixtures
+   SET ${field} = $1,
+       ${field === 'home_team_id'
+          ? 'home_placeholder'
+          : 'away_placeholder'} = NULL
+   WHERE id = $2`,
+  [winner_team_id, nextMatch.fixtureId]
+);
+}
 
     res.json(result.rows[0]);
   } catch (err) {

@@ -1,120 +1,174 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from '../axiosConfig';
 import { Box, Paper, Typography, Chip } from '@mui/material';
+import Flag from 'react-world-flags';
 
-const bracket = {
-  left: [
-    {
-      title: 'Round of 32',
-      matches: [
-        { id: 73, home: 'Runner-up Group A', away: 'Runner-up Group B' },
-        { id: 75, home: 'Winner Group F', away: 'Runner-up Group C' },
-        { id: 74, home: 'Winner Group E', away: 'Best 3rd Group A/B/C/D/F' },
-        { id: 77, home: 'Winner Group I', away: 'Best 3rd Group C/D/F/G/H' },
-        { id: 76, home: 'Winner Group C', away: 'Runner-up Group F' },
-        { id: 78, home: 'Runner-up Group E', away: 'Runner-up Group I' },
-        { id: 79, home: 'Winner Group A', away: 'Best 3rd Group C/E/F/H/I' },
-        { id: 80, home: 'Winner Group L', away: 'Best 3rd Group E/H/I/J/K' },
-      ],
-    },
-    {
-      title: 'Round of 16',
-      matches: [
-        { id: 89, home: 'Winner Match 73', away: 'Winner Match 75' },
-        { id: 90, home: 'Winner Match 74', away: 'Winner Match 77' },
-        { id: 91, home: 'Winner Match 76', away: 'Winner Match 78' },
-        { id: 92, home: 'Winner Match 79', away: 'Winner Match 80' },
-      ],
-    },
-    {
-      title: 'Quarterfinals',
-      matches: [
-        { id: 97, home: 'Winner Match 89', away: 'Winner Match 90' },
-        { id: 99, home: 'Winner Match 91', away: 'Winner Match 92' },
-      ],
-    },
-    {
-      title: 'Semifinal',
-      matches: [
-        { id: 101, home: 'Winner Match 97', away: 'Winner Match 98' },
-      ],
-    },
-  ],
-  right: [
-    {
-      title: 'Round of 32',
-      matches: [
-        { id: 83, home: 'Runner-up Group K', away: 'Runner-up Group L' },
-        { id: 84, home: 'Winner Group H', away: 'Runner-up Group J' },
-        { id: 81, home: 'Winner Group D', away: 'Best 3rd Group B/E/F/I/J' },
-        { id: 82, home: 'Winner Group G', away: 'Best 3rd Group A/E/H/I/J' },
-        { id: 86, home: 'Winner Group J', away: 'Runner-up Group H' },
-        { id: 88, home: 'Runner-up Group D', away: 'Runner-up Group G' },
-        { id: 85, home: 'Winner Group B', away: 'Best 3rd Group E/F/G/I/J' },
-        { id: 87, home: 'Winner Group K', away: 'Best 3rd Group D/E/I/J/L' },
-      ],
-    },
-    {
-      title: 'Round of 16',
-      matches: [
-        { id: 93, home: 'Winner Match 83', away: 'Winner Match 84' },
-        { id: 94, home: 'Winner Match 81', away: 'Winner Match 82' },
-        { id: 95, home: 'Winner Match 86', away: 'Winner Match 88' },
-        { id: 96, home: 'Winner Match 85', away: 'Winner Match 87' },
-      ],
-    },
-    {
-      title: 'Quarterfinals',
-      matches: [
-        { id: 98, home: 'Winner Match 93', away: 'Winner Match 94' },
-        { id: 100, home: 'Winner Match 95', away: 'Winner Match 96' },
-      ],
-    },
-    {
-      title: 'Semifinal',
-      matches: [
-        { id: 102, home: 'Winner Match 99', away: 'Winner Match 100' },
-      ],
-    },
-  ],
-  final: {
-    title: 'Final',
-    match: { id: 104, home: 'Winner Match 101', away: 'Winner Match 102' },
-  },
+// --- MatchCard stays unchanged ---
+const MatchCard = ({
+match,
+side = 'left',
+final = false,
+compact = false,
+}) => {
+
+const formatScore = (score, penalties) => {
+if (score === null || score === undefined) {
+return '';
+}
+if (
+  match.decidedBy === 'penalties' &&
+  penalties !== null &&
+  penalties !== undefined
+) {
+  return `${score} (${penalties})`;
+}
+return score;
 };
 
-const stageGap = {
-  0: 1.4,
-  1: 7.5,
-  2: 20,
-  3: 0,
-};
+const hasResult =
+match.homeScore !== null &&
+match.homeScore !== undefined &&
+match.awayScore !== null &&
+match.awayScore !== undefined;
 
-const allMobileRounds = [
-  { title: 'Round of 32', matches: [...bracket.left[0].matches, ...bracket.right[0].matches].sort((a, b) => a.id - b.id) },
-  { title: 'Round of 16', matches: [...bracket.left[1].matches, ...bracket.right[1].matches].sort((a, b) => a.id - b.id) },
-  { title: 'Quarterfinals', matches: [...bracket.left[2].matches, ...bracket.right[2].matches].sort((a, b) => a.id - b.id) },
-  { title: 'Semifinals', matches: [...bracket.left[3].matches, ...bracket.right[3].matches].sort((a, b) => a.id - b.id) },
-  { title: 'Final', matches: [bracket.final.match] },
-];
+const homeWinner =
+hasResult &&
+(
+match.homeScore > match.awayScore ||
+(
+match.decidedBy === 'penalties' &&
+match.penaltyHome > match.penaltyAway
+)
+);
 
-const MatchCard = ({ match, side = 'left', final = false, compact = false }) => (
-  <Paper
-    elevation={final ? 5 : 2}
+const awayWinner =
+hasResult &&
+(
+match.awayScore > match.homeScore ||
+(
+match.decidedBy === 'penalties' &&
+match.penaltyAway > match.penaltyHome
+)
+);
+
+const TeamRow = ({
+team,
+flag,
+score,
+winner,
+}) => (
+<Box
+sx={{
+display: 'flex',
+alignItems: 'center',
+justifyContent: 'space-between',
+gap: 1,
+p: 0.8,
+borderRadius: 1.25,
+background: winner
+? 'linear-gradient(135deg, rgba(217,251,232,0.72) 0%, rgba(255,255,255,0.9) 100%)'
+: 'rgba(255,255,255,0.55)',
+border: winner
+? '1px solid rgba(27,94,32,0.22)'
+: '1px solid rgba(15,23,42,0.06)',
+boxShadow: winner
+? '0 6px 16px rgba(27,94,32,0.15)'
+: 'none',
+opacity: hasResult && !winner ? 0.65 : 1,
+}}
+>
+<Box
+sx={{
+display: 'flex',
+alignItems: 'center',
+gap: 1,
+minWidth: 0,
+flex: 1,
+}}
+>
+{flag ? (
+<Flag
+code={flag}
+style={{
+width: 28,
+height: 18,
+borderRadius: 2,
+flexShrink: 0,
+boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+}}
+/>
+) : (
+<Box
+sx={{
+width: 28,
+height: 18,
+borderRadius: 0.5,
+background: 'rgba(15,61,46,0.12)',
+flexShrink: 0,
+}}
+/>
+)}
+    <Typography
+      title={team}
+      sx={{
+        fontWeight: winner ? 900 : 800,
+        color: winner ? '#0f3d2e' : '#143428',
+        fontSize: compact ? '0.82rem' : '0.78rem',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {team}
+    </Typography>
+  </Box>
+
+  <Box
     sx={{
-      width: compact ? '100%' : final ? 250 : 230,
-      borderRadius: 1.5,
-      overflow: 'hidden',
-      background: final
-        ? 'linear-gradient(135deg, rgba(255,248,225,0.98) 0%, rgba(217,251,232,0.98) 100%)'
-        : 'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(238,247,242,0.92) 100%)',
-      border: final ? '2px solid rgba(245,158,11,0.8)' : '1px solid rgba(27,94,32,0.18)',
-      position: 'relative',
-      flexShrink: 0,
-      boxShadow: final
-        ? '0 18px 35px rgba(120, 85, 20, 0.22)'
-        : '0 8px 22px rgba(15,23,42,0.09)',
-      backdropFilter: 'blur(8px)',
-      '&::after': compact || final
+      minWidth: 52,
+      px: 1,
+      py: 0.45,
+      borderRadius: 1.2,
+      textAlign: 'center',
+      background: winner
+        ? 'linear-gradient(135deg, #1b5e20 0%, #0f766e 100%)'
+        : 'linear-gradient(135deg, rgba(15,118,110,0.10) 0%, rgba(217,251,232,0.42) 100%)',
+      color: winner ? '#fff' : '#12372a',
+      border: winner
+        ? '1px solid rgba(27,94,32,0.25)'
+        : '1px solid rgba(15,118,110,0.15)',
+      fontWeight: 900,
+      fontSize: '0.82rem',
+      boxShadow: winner
+        ? '0 4px 12px rgba(27,94,32,0.25)'
+        : 'none',
+    }}
+  >
+    {score}
+  </Box>
+</Box>
+);
+
+return (
+<Paper
+elevation={0}
+sx={{
+width: compact ? '100%' : final ? 260 : 235,
+borderRadius: 2,
+overflow: 'hidden',
+position: 'relative',
+background: final
+? 'linear-gradient(145deg, rgba(255,248,225,0.98) 0%, rgba(217,251,232,0.98) 60%, rgba(255,255,255,0.94) 100%)'
+: 'linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(238,247,242,0.92) 100%)',
+border: final
+? '2px solid rgba(245,158,11,0.7)'
+: '1px solid rgba(27,94,32,0.15)',
+boxShadow: final
+? '0 18px 38px rgba(180,83,9,0.20)'
+: '0 10px 24px rgba(15,23,42,0.10)',
+backdropFilter: 'blur(8px)',
+    '&::after':
+      compact || final
         ? {}
         : {
             content: '""',
@@ -124,82 +178,81 @@ const MatchCard = ({ match, side = 'left', final = false, compact = false }) => 
             width: 20,
             borderTop: '2px solid rgba(27,94,32,0.55)',
           },
+  }}
+>
+  <Box
+    sx={{
+      px: 1.25,
+      py: 0.7,
+      background: final
+        ? 'linear-gradient(135deg, #b45309 0%, #f59e0b 42%, #1b5e20 100%)'
+        : 'linear-gradient(135deg, #0f3d2e 0%, #0f766e 46%, #1b5e20 100%)',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
     }}
   >
-    <Box
+    <Typography
+      variant="caption"
       sx={{
-        px: 1.25,
-        py: 0.6,
-        background: final ? 'rgba(245,158,11,0.18)' : 'rgba(27,94,32,0.10)',
-        borderBottom: '1px solid rgba(27,94,32,0.12)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 1,
+        color: '#fff',
+        fontWeight: 900,
+        textTransform: 'uppercase',
       }}
     >
-      <Typography
-        variant="caption"
+      Match {match.id}
+    </Typography>
+
+    {final && (
+      <Chip
+        label="Final"
+        size="small"
         sx={{
-          color: '#1b5e20',
+          height: 20,
+          fontSize: '0.65rem',
           fontWeight: 900,
-          fontSize: '0.68rem',
-          letterSpacing: 0,
+          backgroundColor: 'rgba(255,255,255,0.2)',
+          color: '#fff',
         }}
-      >
-        Match {match.id}
-      </Typography>
+      />
+    )}
+  </Box>
 
-      {final && (
-        <Chip
-          label="Final"
-          size="small"
-          sx={{
-            height: 20,
-            fontSize: '0.65rem',
-            fontWeight: 800,
-            color: '#fff',
-            backgroundColor: '#b45309',
-          }}
-        />
+  <Box sx={{ p: 1 }}>
+    <TeamRow
+      team={match.home}
+      flag={match.homeFlag}
+      score={formatScore(
+        match.homeScore,
+        match.penaltyHome
       )}
-    </Box>
+      winner={homeWinner}
+    />
 
-    <Box sx={{ px: 1.25, py: 0.95 }}>
-      <Typography
-        variant="body2"
-        title={match.home}
-        sx={{
-          color: '#143428',
-          fontWeight: 800,
-          fontSize: compact ? '0.82rem' : '0.76rem',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {match.home}
-      </Typography>
+    <Box sx={{ height: 8 }} />
 
-      <Box sx={{ my: 0.65, borderTop: '1px solid rgba(27,94,32,0.12)' }} />
-
-      <Typography
-        variant="body2"
-        title={match.away}
-        sx={{
-          color: '#143428',
-          fontWeight: 800,
-          fontSize: compact ? '0.82rem' : '0.76rem',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {match.away}
-      </Typography>
-    </Box>
-  </Paper>
+    <TeamRow
+      team={match.away}
+      flag={match.awayFlag}
+      score={formatScore(
+        match.awayScore,
+        match.penaltyAway
+      )}
+      winner={awayWinner}
+    />
+  </Box>
+</Paper>
 );
+};
+
+
+// --- RoundColumn stays unchanged ---
+const stageGap = {
+  0: 1.4,
+  1: 7.5,
+  2: 20,
+  3: 0,
+};
 
 const RoundColumn = ({ round, index, side }) => (
   <Box
@@ -247,42 +300,169 @@ const RoundColumn = ({ round, index, side }) => (
   </Box>
 );
 
-const MobileRound = ({ round }) => (
-  <Paper
-    elevation={0}
-    sx={{
-      mb: 2,
-      borderRadius: 2,
-      overflow: 'hidden',
-      border: '1px solid rgba(27,94,32,0.18)',
-      background: 'rgba(255,255,255,0.72)',
-      boxShadow: '0 12px 30px rgba(15,23,42,0.10)',
-      backdropFilter: 'blur(8px)',
-    }}
-  >
-    <Box sx={{ px: 1.5, py: 1, background: 'rgba(15,61,46,0.88)' }}>
-      <Typography
-        variant="subtitle2"
-        sx={{
-          color: '#d9fbe8',
-          fontWeight: 900,
-          textTransform: 'uppercase',
-          letterSpacing: 0,
-        }}
-      >
-        {round.title}
-      </Typography>
-    </Box>
-
-    <Box sx={{ p: 1.25, display: 'grid', gap: 1 }}>
-      {round.matches.map(match => (
-        <MatchCard key={match.id} match={match} compact final={round.title === 'Final'} />
-      ))}
-    </Box>
-  </Paper>
-);
-
+// --- KnockoutBracket main component setup ---
 const KnockoutBracket = () => {
+  const [fixtures, setFixtures] = useState([]);
+
+  useEffect(() => {
+    axios.get('/fixtures')
+      .then(res => setFixtures(res.data))
+      .catch(err => console.error(err));
+  }, []);
+
+  // map DB round values to frontend labels
+  const roundMap = {
+    '4': 'Round of 32',
+    '5': 'Round of 16',
+    '6': 'Quarterfinals',
+    '7': 'Semifinals',
+    '8': 'Final',
+  };
+
+  const buildMatch = f => ({
+  id: f.id,
+
+  home: f.home_team || f.home_placeholder,
+  away: f.away_team || f.away_placeholder,
+
+  homeFlag: f.home_flag,
+  awayFlag: f.away_flag,
+
+  homeScore: f.home_score,
+  awayScore: f.away_score,
+
+  penaltyHome: f.penalty_home,
+  penaltyAway: f.penalty_away,
+
+  decidedBy: f.decided_by,
+});
+
+  // group fixtures by round (using roundMap)
+  const rounds = {
+    'Round of 32': fixtures.filter(f => roundMap[f.round] === 'Round of 32'),
+    'Round of 16': fixtures.filter(f => roundMap[f.round] === 'Round of 16'),
+    'Quarterfinals': fixtures.filter(f => roundMap[f.round] === 'Quarterfinals'),
+    'Semifinals': fixtures.filter(f => roundMap[f.round] === 'Semifinals'),
+    'Final': fixtures.filter(f => roundMap[f.round] === 'Final'),
+  };
+
+  const getMatches = (roundName, ids) =>
+  rounds[roundName]
+    .filter(f => ids.includes(f.id))
+    .map(buildMatch);
+
+const leftRounds = [
+  {
+    title: 'Round of 32',
+    matches: getMatches('Round of 32', [73, 75, 74, 77, 76, 78, 79, 80]),
+  },
+  {
+    title: 'Round of 16',
+    matches: getMatches('Round of 16', [89, 90, 91, 92]),
+  },
+  {
+    title: 'Quarterfinals',
+    matches: getMatches('Quarterfinals', [97, 99]),
+  },
+  {
+    title: 'Semifinals',
+    matches: getMatches('Semifinals', [101]),
+  },
+];
+
+const rightRounds = [
+  {
+    title: 'Round of 32',
+    matches: getMatches('Round of 32', [83, 84, 81, 82, 86, 88, 85, 87]),
+  },
+  {
+    title: 'Round of 16',
+    matches: getMatches('Round of 16', [93, 94, 95, 96]),
+  },
+  {
+    title: 'Quarterfinals',
+    matches: getMatches('Quarterfinals', [98, 100]),
+  },
+  {
+    title: 'Semifinals',
+    matches: getMatches('Semifinals', [102]),
+  },
+];
+
+const finalMatch =
+  rounds['Final']?.length > 0
+    ? buildMatch(rounds['Final'][0])
+    : null;
+
+    const champion = (() => {
+  if (!finalMatch) return null;
+
+  const hasResult =
+    finalMatch.homeScore !== null &&
+    finalMatch.homeScore !== undefined &&
+    finalMatch.awayScore !== null &&
+    finalMatch.awayScore !== undefined;
+
+  if (!hasResult) return null;
+
+  const homeWins =
+    finalMatch.decidedBy === 'penalties'
+      ? finalMatch.penaltyHome > finalMatch.penaltyAway
+      : finalMatch.homeScore > finalMatch.awayScore;
+
+  return homeWins
+    ? {
+        name: finalMatch.home,
+        flag: finalMatch.homeFlag,
+      }
+    : {
+        name: finalMatch.away,
+        flag: finalMatch.awayFlag,
+      };
+})();
+
+    // --- MobileRound stays unchanged ---
+  const MobileRound = ({ round }) => (
+    <Paper
+      elevation={0}
+      sx={{
+        mb: 2,
+        borderRadius: 2,
+        overflow: 'hidden',
+        border: '1px solid rgba(27,94,32,0.18)',
+        background: 'rgba(255,255,255,0.72)',
+        boxShadow: '0 12px 30px rgba(15,23,42,0.10)',
+        backdropFilter: 'blur(8px)',
+      }}
+    >
+      <Box sx={{ px: 1.5, py: 1, background: 'rgba(15,61,46,0.88)' }}>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            color: '#d9fbe8',
+            fontWeight: 900,
+            textTransform: 'uppercase',
+            letterSpacing: 0,
+          }}
+        >
+          {round.title}
+        </Typography>
+      </Box>
+
+      <Box sx={{ p: 1.25, display: 'grid', gap: 1 }}>
+        {round.matches.map(match => (
+          <MatchCard
+            key={match.id}
+            match={match}
+            compact
+            final={round.title === 'Final'}
+          />
+        ))}
+      </Box>
+    </Paper>
+  );
+
+  // --- Return block ---
   return (
     <Box
       sx={{
@@ -308,6 +488,7 @@ const KnockoutBracket = () => {
         Knockout Bracket
       </Typography>
 
+      {/* Desktop view */}
       <Box
         sx={{
           display: { xs: 'none', md: 'block' },
@@ -329,7 +510,7 @@ const KnockoutBracket = () => {
             pt: 2,
           }}
         >
-          {bracket.left.map((round, index) => (
+          {leftRounds.map((round, index) => (
             <RoundColumn
               key={`left-${round.title}`}
               round={round}
@@ -366,41 +547,122 @@ const KnockoutBracket = () => {
                 boxShadow: '0 8px 18px rgba(15,23,42,0.18)',
               }}
             >
-              {bracket.final.title}
+              Final
             </Typography>
 
-            <MatchCard match={bracket.final.match} final />
+            {finalMatch && <MatchCard match={finalMatch} final />}
 
             <Paper
-              elevation={2}
-              sx={{
-                width: 230,
-                mt: 1.5,
-                p: 1.4,
-                borderRadius: 2,
-                textAlign: 'center',
-                background: 'linear-gradient(135deg, #12372a 0%, #1b5e20 100%)',
-                color: '#fff',
-                border: '1px solid rgba(255,255,255,0.22)',
-              }}
-            >
-              <Typography
-                variant="caption"
-                sx={{
-                  display: 'block',
-                  fontWeight: 800,
-                  opacity: 0.82,
-                }}
-              >
-                Winner
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 900 }}>
-                World Cup Champion
-              </Typography>
-            </Paper>
+elevation={0}
+sx={{
+width: 260,
+mt: 2,
+p: 2,
+borderRadius: 2,
+textAlign: 'center',
+
+background:
+  'linear-gradient(145deg, rgba(255,248,225,0.98) 0%, rgba(217,251,232,0.98) 100%)',
+
+border: '2px solid rgba(245,158,11,0.75)',
+
+boxShadow:
+  '0 18px 40px rgba(180,83,9,0.22)',
+
+position: 'relative',
+overflow: 'hidden',
+
+'&::before': {
+  content: '""',
+  position: 'absolute',
+  inset: 0,
+  background:
+    'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 60%)',
+  pointerEvents: 'none',
+},
+
+}}
+
+>
+
+<Box
+sx={{
+position: 'relative',
+zIndex: 1,
+}}
+
+>
+<Typography
+  sx={{
+    fontSize: '2rem',
+    mb: 0.5,
+    textShadow: '0 4px 12px rgba(180,83,9,0.35)',
+  }}
+>
+  🏆
+</Typography>
+
+<Typography
+  variant="caption"
+  sx={{
+    display: 'block',
+    fontWeight: 900,
+    color: '#8a5a00',
+    textTransform: 'uppercase',
+    mb: 1,
+  }}
+>
+  World Champion
+</Typography>
+
+{champion ? (
+  <>
+    {champion.flag && (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          mb: 1,
+        }}
+      >
+        <Flag
+          code={champion.flag}
+          style={{
+            width: 70,
+            height: 46,
+            borderRadius: 4,
+            boxShadow: '0 8px 18px rgba(0,0,0,0.18)',
+          }}
+        />
+      </Box>
+    )}
+
+    <Typography
+      sx={{
+        fontWeight: 950,
+        color: '#12372a',
+        fontSize: '1.05rem',
+      }}
+    >
+      {champion.name}
+    </Typography>
+  </>
+) : (
+  <Typography
+    sx={{
+      fontWeight: 800,
+      color: '#60756b',
+    }}
+  >
+    Champion TBD
+  </Typography>
+)}
+
+  </Box>
+</Paper>
           </Box>
 
-          {[...bracket.right].reverse().map((round, index) => (
+          {[...rightRounds].reverse().map((round, index) => (
             <RoundColumn
               key={`right-${round.title}`}
               round={round}
@@ -411,8 +673,9 @@ const KnockoutBracket = () => {
         </Box>
       </Box>
 
+      {/* Mobile view */}
       <Box sx={{ display: { xs: 'block', md: 'none' } }}>
-        {allMobileRounds.map(round => (
+        {[...leftRounds, ...rightRounds, { title: 'Final', matches: finalMatch ? [finalMatch] : [] }].map(round => (
           <MobileRound key={round.title} round={round} />
         ))}
       </Box>
@@ -421,3 +684,4 @@ const KnockoutBracket = () => {
 };
 
 export default KnockoutBracket;
+

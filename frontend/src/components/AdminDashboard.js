@@ -88,16 +88,57 @@ function AdminDashboard() {
         <Grid item xs={12} md={6}>
           <Card sx={{ borderRadius: 3, boxShadow: 6, border: '2px solid #00FFCC' }}>
             <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Match Results</Typography>
-              <Button component={Link} to="/results" variant="contained"
-                sx={{ backgroundColor: '#00FFCC', color: '#000', fontWeight: 'bold', mr: 2 }}>
-                Enter Results
-              </Button>
-              <Button component={Link} to="/fixtures/manage" variant="outlined"
-                sx={{ borderColor: '#00FFCC', color: '#00FFCC', fontWeight: 'bold' }}>
-                Manage Fixtures
-              </Button>
-            </CardContent>
+  <Typography variant="h6" sx={{ mb: 2 }}>
+    Match Results
+  </Typography>
+
+  <Button
+    component={Link}
+    to="/results"
+    variant="contained"
+    sx={{
+      backgroundColor: '#00FFCC',
+      color: '#000',
+      fontWeight: 'bold',
+      mr: 2,
+      mb: 1,
+    }}
+  >
+    Enter Results
+  </Button>
+
+  <Button
+    component={Link}
+    to="/fixtures/manage"
+    variant="outlined"
+    sx={{
+      borderColor: '#00FFCC',
+      color: '#00FFCC',
+      fontWeight: 'bold',
+      mr: 2,
+      mb: 1,
+    }}
+  >
+    Manage Fixtures
+  </Button>
+
+  <Button
+    component={Link}
+    to="/knockout-results"
+    variant="contained"
+    sx={{
+      backgroundColor: '#f59e0b',
+      color: '#fff',
+      fontWeight: 'bold',
+      mb: 1,
+      '&:hover': {
+        backgroundColor: '#d97706',
+      },
+    }}
+  >
+    Knockout Results
+  </Button>
+</CardContent>
           </Card>
         </Grid>
       </Grid>
