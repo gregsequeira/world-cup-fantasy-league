@@ -1,8 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from '../axiosConfig';
 import { Card, CardContent, Typography, Chip, Box } from '@mui/material';
 import Flag from 'react-world-flags';
 
 const KnockoutSelectCard = ({ team, selected, onClick }) => {
+    const [stats, setStats] = useState(null);
+const [loadingStats, setLoadingStats] = useState(false);
+
+useEffect(() => {
+  if (!team?.id) return;
+
+  setLoadingStats(true);
+
+  axios.get(`/standings/${team.id}`)
+    .then(res => setStats(res.data))
+    .catch(() =>
+      setStats({
+        won: 0,
+        goals_for: 0,
+        goals_against: 0,
+        points: 0,
+        goal_difference: 0,
+      })
+    )
+    .finally(() => setLoadingStats(false));
+}, [team?.id]);
   return (
     <Card
       elevation={0}
@@ -148,49 +170,65 @@ const KnockoutSelectCard = ({ team, selected, onClick }) => {
             mb: 1,
           }}
         >
-          <Chip
-            label={`Rank ${team.ranking ?? '-'}`}
-            size="small"
-            sx={{
-              borderRadius: 1.25,
-              backgroundColor: 'rgba(15,118,110,0.10)',
-              color: '#12372a',
-              fontWeight: 850,
-            }}
-          />
+          {loadingStats ? (
+  <Chip
+    label="Loading..."
+    size="small"
+    sx={{
+      gridColumn: '1 / -1',
+      borderRadius: 1.25,
+      backgroundColor: 'rgba(15,118,110,0.10)',
+      color: '#12372a',
+      fontWeight: 850,
+    }}
+  />
+) : (
+  <>
+    <Chip
+  label={`Rank ${team.ranking ?? '-'}`}
+  size="small"
+  sx={{
+    borderRadius: 1.25,
+    backgroundColor: 'rgba(15,118,110,0.10)',
+    color: '#12372a',
+    fontWeight: 850,
+  }}
+/>
+    
+    <Chip
+      label={`Wins ${stats?.won ?? 0}`}
+      size="small"
+      sx={{
+        borderRadius: 1.25,
+        backgroundColor: 'rgba(27,94,32,0.10)',
+        color: '#12372a',
+        fontWeight: 850,
+      }}
+    />
 
-          <Chip
-            label={`Wins ${team.wins ?? 0}`}
-            size="small"
-            sx={{
-              borderRadius: 1.25,
-              backgroundColor: 'rgba(27,94,32,0.10)',
-              color: '#12372a',
-              fontWeight: 850,
-            }}
-          />
+    <Chip
+      label={`GF ${stats?.goals_for ?? 0}`}
+      size="small"
+      sx={{
+        borderRadius: 1.25,
+        backgroundColor: 'rgba(245,158,11,0.12)',
+        color: '#6b3f00',
+        fontWeight: 850,
+      }}
+    />
 
-          <Chip
-            label={`GF ${team.goals_for ?? 0}`}
-            size="small"
-            sx={{
-              borderRadius: 1.25,
-              backgroundColor: 'rgba(245,158,11,0.12)',
-              color: '#6b3f00',
-              fontWeight: 850,
-            }}
-          />
-
-          <Chip
-            label={`GA ${team.goals_against ?? 0}`}
-            size="small"
-            sx={{
-              borderRadius: 1.25,
-              backgroundColor: 'rgba(180,83,9,0.10)',
-              color: '#6b3f00',
-              fontWeight: 850,
-            }}
-          />
+    <Chip
+      label={`GA ${stats?.goals_against ?? 0}`}
+      size="small"
+      sx={{
+        borderRadius: 1.25,
+        backgroundColor: 'rgba(180,83,9,0.10)',
+        color: '#6b3f00',
+        fontWeight: 850,
+      }}
+    />
+  </>
+)}
         </Box>
 
         <Typography
