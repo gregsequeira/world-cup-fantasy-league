@@ -11,7 +11,18 @@ final = false,
 compact = false,
 }) => {
 
-const formatScore = (score, penalties) => {
+const formatFixtureDate = () => {
+  if (!match.matchDate) return '';
+
+  const d = new Date(match.matchDate);
+
+  return d.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  });
+};
+
+    const formatScore = (score, penalties) => {
 if (score === null || score === undefined) {
 return '';
 }
@@ -174,8 +185,8 @@ backdropFilter: 'blur(8px)',
             content: '""',
             position: 'absolute',
             top: '50%',
-            [side === 'left' ? 'right' : 'left']: -20,
-            width: 20,
+            [side === 'left' ? 'right' : 'left']: -28,
+            width: 28,
             borderTop: '2px solid rgba(27,94,32,0.55)',
           },
   }}
@@ -183,7 +194,7 @@ backdropFilter: 'blur(8px)',
   <Box
     sx={{
       px: 1.25,
-      py: 0.7,
+      py: 0.55,
       background: final
         ? 'linear-gradient(135deg, #b45309 0%, #f59e0b 42%, #1b5e20 100%)'
         : 'linear-gradient(135deg, #0f3d2e 0%, #0f766e 46%, #1b5e20 100%)',
@@ -192,16 +203,31 @@ backdropFilter: 'blur(8px)',
       alignItems: 'center',
     }}
   >
-    <Typography
-      variant="caption"
-      sx={{
-        color: '#fff',
-        fontWeight: 900,
-        textTransform: 'uppercase',
-      }}
-    >
-      Match {match.id}
-    </Typography>
+    <Box>
+  <Typography
+    variant="caption"
+    sx={{
+      color: '#fff',
+      fontWeight: 900,
+      display: 'block',
+      lineHeight: 1.1,
+    }}
+  >
+    Match {match.id}
+  </Typography>
+
+  <Typography
+    variant="caption"
+    sx={{
+      color: 'rgba(255,255,255,0.82)',
+      fontSize: '0.60rem',
+      lineHeight: 1,
+    }}
+  >
+    {formatFixtureDate()}
+    {match.matchTime ? ` • ${match.matchTime.slice(0,5)}` : ''}
+  </Typography>
+</Box>
 
     {final && (
       <Chip
@@ -218,29 +244,35 @@ backdropFilter: 'blur(8px)',
     )}
   </Box>
 
-  <Box sx={{ p: 1 }}>
-    <TeamRow
-      team={match.home}
-      flag={match.homeFlag}
-      score={formatScore(
-        match.homeScore,
-        match.penaltyHome
-      )}
-      winner={homeWinner}
-    />
+  <Box
+  sx={{
+    p: 1,
+    opacity: hasResult ? 1 : 0.92,
+    transition: 'all .25s ease',
+  }}
+>
+  <TeamRow
+    team={match.home}
+    flag={match.homeFlag}
+    score={formatScore(
+      match.homeScore,
+      match.penaltyHome
+    )}
+    winner={homeWinner}
+  />
 
-    <Box sx={{ height: 8 }} />
+  <Box sx={{ height: 8 }} />
 
-    <TeamRow
-      team={match.away}
-      flag={match.awayFlag}
-      score={formatScore(
-        match.awayScore,
-        match.penaltyAway
-      )}
-      winner={awayWinner}
-    />
-  </Box>
+  <TeamRow
+    team={match.away}
+    flag={match.awayFlag}
+    score={formatScore(
+      match.awayScore,
+      match.penaltyAway
+    )}
+    winner={awayWinner}
+  />
+</Box>
 </Paper>
 );
 };
@@ -249,9 +281,16 @@ backdropFilter: 'blur(8px)',
 // --- RoundColumn stays unchanged ---
 const stageGap = {
   0: 1.4,
-  1: 7.5,
-  2: 20,
+  1: 3.5,
+  2: 6,
   3: 0,
+};
+
+const roundOffsets = {
+  0: 0,
+  1: 72,
+  2: 188,
+  3: 284,
 };
 
 const RoundColumn = ({ round, index, side }) => (
@@ -291,6 +330,7 @@ const RoundColumn = ({ round, index, side }) => (
         flexDirection: 'column',
         justifyContent: index === 3 ? 'center' : 'flex-start',
         gap: `${stageGap[index]}rem`,
+        transform: `translateY(${roundOffsets[index]}px)`,
       }}
     >
       {round.matches.map(match => (
@@ -321,6 +361,9 @@ const KnockoutBracket = () => {
 
   const buildMatch = f => ({
   id: f.id,
+
+  matchDate: f.match_date,
+  matchTime: f.match_time,
 
   home: f.home_team || f.home_placeholder,
   away: f.away_team || f.away_placeholder,
@@ -684,4 +727,3 @@ zIndex: 1,
 };
 
 export default KnockoutBracket;
-
