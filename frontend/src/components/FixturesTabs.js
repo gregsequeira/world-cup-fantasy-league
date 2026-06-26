@@ -4,6 +4,16 @@ import FixturesByRound from './FixturesByRound';
 
 const FixturesTabs = () => {
   const [tab, setTab] = useState(0);
+  const rounds = [
+  { value: 1, label: 'Round 1' },
+  { value: 2, label: 'Round 2' },
+  { value: 3, label: 'Round 3' },
+  { value: 4, label: 'Round of 32' },
+  { value: 5, label: 'Round of 16' },
+  { value: 6, label: 'Quarter-Finals' },
+  { value: 7, label: 'Semi-Finals' },
+  { value: 8, label: 'Final' },
+];
   const handleTabChange = (event, newValue) => setTab(newValue);
 
   return (
@@ -47,28 +57,21 @@ const FixturesTabs = () => {
             },
           }}
         >
-          <Tab label="Round 1" />
-          <Tab label="Round 2" />
-          <Tab label="Round 3" />
+          {rounds.map(round => (
+  <Tab
+    key={round.value}
+    label={round.label}
+  />
+))}
         </Tabs>
       </AppBar>
 
       {/* Round Content */}
-      <Fade in={tab === 0} timeout={500} unmountOnExit>
-        <Box sx={{ py: 1 }}>
-          <FixturesByRound round={1} />
-        </Box>
-      </Fade>
-      <Fade in={tab === 1} timeout={500} unmountOnExit>
-        <Box sx={{ py: 1 }}>
-          <FixturesByRound round={2} />
-        </Box>
-      </Fade>
-      <Fade in={tab === 2} timeout={500} unmountOnExit>
-        <Box sx={{ py: 1 }}>
-          <FixturesByRound round={3} />
-        </Box>
-      </Fade>
+      <Fade in timeout={500}>
+  <Box sx={{ py: 1 }}>
+    <FixturesByRound round={rounds[tab].value} />
+  </Box>
+</Fade>
     </Paper>
   );
 };

@@ -13,11 +13,17 @@ export const TeamCard = ({ label, team }) => {
     if (!team?.id) return;
 
     axios.get(`/fixtures/team/${team.id}`)
-      .then(res => setFixtures(res.data))
-      .catch(() => setFixtures([]));
+  .then(res => {
+    const groupStageFixtures = res.data.filter(
+      fixture => Number(fixture.round) <= 3
+    );
+
+    setFixtures(groupStageFixtures);
+  })
+  .catch(() => setFixtures([]));
 
     setLoadingStats(true);
-    axios.get(`/standings/${team.id}`)
+    axios.get(`/standings/${team.id}?maxRound=3`)
       .then(res => {
         const updatedStats = { ...res.data };
 

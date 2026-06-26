@@ -31,6 +31,17 @@ function FixturesPage({ fixturesOverride }) {
     return Number(a) - Number(b);
   });
 
+  const roundTitles = {
+  1: 'Round 1',
+  2: 'Round 2',
+  3: 'Round 3',
+  4: 'Round of 32',
+  5: 'Round of 16',
+  6: 'Quarter-Finals',
+  7: 'Semi-Finals',
+  8: 'Final',
+};
+
     return (
     <Box
       sx={{
@@ -56,16 +67,18 @@ function FixturesPage({ fixturesOverride }) {
         >
           <Box sx={{ py: 1.5, background: '#d9f5df', textAlign: 'center' }}>
             <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 800,
-                letterSpacing: 1.2,
-                color: '#1b5e20',
-                fontSize: { xs: '1rem', md: '1.25rem' }
-              }}
-            >
-              {round === 'UNASSIGNED' ? 'UNASSIGNED ROUND' : `ROUND ${round}`}
-            </Typography>
+  variant="h6"
+  sx={{
+    fontWeight: 800,
+    letterSpacing: 1.2,
+    color: '#1b5e20',
+    fontSize: { xs: '1rem', md: '1.25rem' }
+  }}
+>
+  {round === 'UNASSIGNED'
+    ? 'UNASSIGNED ROUND'
+    : roundTitles[Number(round)] || `Round ${round}`}
+</Typography>
           </Box>
           <Box sx={{ p: { xs: 2, md: 3 } }}>
             <List
