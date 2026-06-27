@@ -15,7 +15,7 @@ function StandingsPage() {
   const [standings, setStandings] = useState([]);
 
   useEffect(() => {
-    axios.get('/standings')
+    axios.get('/standings?maxRound=3')
       .then(res => setStandings(res.data))
       .catch(err => console.error(err));
   }, []);

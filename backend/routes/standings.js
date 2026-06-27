@@ -4,6 +4,9 @@ const pool = require('../db');
 
 router.get('/', async (req, res) => {
   try {
+    const maxRound = req.query.maxRound
+      ? parseInt(req.query.maxRound, 10)
+      : null;
     const result = await pool.query(`
       SELECT 
           t.id AS team_id,
@@ -26,10 +29,18 @@ router.get('/', async (req, res) => {
               WHEN f.home_score = f.away_score AND (f.home_team_id = t.id OR f.away_team_id = t.id) THEN 1
               ELSE 0 END),0) AS points
       FROM teams t
-      LEFT JOIN fixtures f ON t.id = f.home_team_id OR t.id = f.away_team_id
+      LEFT JOIN fixtures f
+  ON (
+       t.id = f.home_team_id
+       OR t.id = f.away_team_id
+     )
+ AND (
+       $1::int IS NULL
+       OR f.round::int <= $1
+     )
       GROUP BY t.id, t.name, t.group_name, t.ranking, t.flag_code
       ORDER BY t.group_name, t.ranking ASC;
-    `);
+    `, [maxRound]);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -54,7 +65,7 @@ router.get('/:teamId', async (req, res) => {
 
     COUNT(f.id) FILTER (
         WHERE f.status = 'Completed'
-          AND ($2::int IS NULL OR f.round::int <= $2)
+          AND ($2::int IS NULL OR f.round::int <= $2) 
           AND (f.home_team_id = t.id OR f.away_team_id = t.id)
     ) AS played,
 
