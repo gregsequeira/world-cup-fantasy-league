@@ -54,41 +54,41 @@ router.get('/:teamId', async (req, res) => {
 
     COUNT(f.id) FILTER (
         WHERE f.status = 'Completed'
-          AND ($2::int IS NULL OR f.round <= $2)
+          AND ($2::int IS NULL OR f.round::int <= $2)
           AND (f.home_team_id = t.id OR f.away_team_id = t.id)
     ) AS played,
 
     COUNT(f.id) FILTER (
         WHERE f.status = 'Completed'
-          AND ($2::int IS NULL OR f.round <= $2)
+          AND ($2::int IS NULL OR f.round::int <= $2)
           AND f.home_team_id = t.id
           AND f.home_score > f.away_score
     )
     +
     COUNT(f.id) FILTER (
         WHERE f.status = 'Completed'
-          AND ($2::int IS NULL OR f.round <= $2)
+          AND ($2::int IS NULL OR f.round::int <= $2)
           AND f.away_team_id = t.id
           AND f.away_score > f.home_score
     ) AS won,
 
     COUNT(f.id) FILTER (
         WHERE f.status = 'Completed'
-          AND ($2::int IS NULL OR f.round <= $2)
+          AND ($2::int IS NULL OR f.round::int <= $2)
           AND f.home_score = f.away_score
           AND (f.home_team_id = t.id OR f.away_team_id = t.id)
     ) AS drawn,
 
     COUNT(f.id) FILTER (
         WHERE f.status = 'Completed'
-          AND ($2::int IS NULL OR f.round <= $2)
+          AND ($2::int IS NULL OR f.round::int <= $2)
           AND f.home_team_id = t.id
           AND f.home_score < f.away_score
     )
     +
     COUNT(f.id) FILTER (
         WHERE f.status = 'Completed'
-          AND ($2::int IS NULL OR f.round <= $2)
+          AND ($2::int IS NULL OR f.round::int <= $2)
           AND f.away_team_id = t.id
           AND f.away_score < f.home_score
     ) AS lost,
@@ -96,7 +96,7 @@ router.get('/:teamId', async (req, res) => {
     COALESCE(
       SUM(
         CASE
-          WHEN ($2::int IS NULL OR f.round <= $2)
+          WHEN ($2::int IS NULL OR f.round::int <= $2)
           THEN
             CASE
               WHEN f.home_team_id = t.id THEN f.home_score
@@ -112,7 +112,7 @@ router.get('/:teamId', async (req, res) => {
     COALESCE(
       SUM(
         CASE
-          WHEN ($2::int IS NULL OR f.round <= $2)
+          WHEN ($2::int IS NULL OR f.round::int <= $2)
           THEN
             CASE
               WHEN f.home_team_id = t.id THEN f.away_score
@@ -128,7 +128,7 @@ router.get('/:teamId', async (req, res) => {
     COALESCE(
       SUM(
         CASE
-          WHEN ($2::int IS NULL OR f.round <= $2)
+          WHEN ($2::int IS NULL OR f.round::int <= $2)
           THEN
             CASE
               WHEN f.home_team_id = t.id THEN f.home_score - f.away_score
@@ -144,7 +144,7 @@ router.get('/:teamId', async (req, res) => {
     COALESCE(
       SUM(
         CASE
-          WHEN ($2::int IS NULL OR f.round <= $2) THEN
+          WHEN ($2::int IS NULL OR f.round::int <= $2) THEN
             CASE
               WHEN f.home_team_id = t.id AND f.home_score > f.away_score THEN 3
               WHEN f.away_team_id = t.id AND f.away_score > f.home_score THEN 3
