@@ -265,9 +265,9 @@ const OverallLeaderboard = () => {
 
                     {showKnockoutView ? (
                       <>
-                        <TableCell align="center" sx={{ fontWeight: 900, color: '#d9fbe8', borderColor: 'rgba(255,255,255,0.14)', fontSize: { xs: '0.72rem', md: '0.82rem' } }}>
-                          Group Pts
-                        </TableCell>
+                        
+
+                        
 
                         {knockoutRoleOrder.map(role => (
                           <TableCell key={role} align="center" sx={{ fontWeight: 900, color: '#d9fbe8', borderColor: 'rgba(255,255,255,0.14)', fontSize: { xs: '0.72rem', md: '0.82rem' } }}>
@@ -286,6 +286,10 @@ const OverallLeaderboard = () => {
                         </TableCell>
                       ))
                     )}
+
+                    <TableCell align="center" sx={{ fontWeight: 900, color: '#d9fbe8', borderColor: 'rgba(255,255,255,0.14)', fontSize: { xs: '0.72rem', md: '0.82rem' } }}>
+                          Group Pts
+                        </TableCell>
 
                     <TableCell align="center" sx={{ fontWeight: 900, color: '#d9fbe8', borderColor: 'rgba(255,255,255,0.14)', fontSize: { xs: '0.72rem', md: '0.82rem' } }}>
                       Total
@@ -335,9 +339,7 @@ const OverallLeaderboard = () => {
 
                         {showKnockoutView ? (
                           <>
-                            <TableCell align="center" sx={{ color: '#fff7d6', fontWeight: 950, fontSize: { xs: '0.78rem', md: '0.9rem' } }}>
-                              {toNumber(user.group_points)}
-                            </TableCell>
+                            
 
                             {knockoutRoleOrder.map(role => (
                               <TableCell key={role} align="center" sx={{ color: '#fff', minWidth: 184 }}>
@@ -362,6 +364,10 @@ const OverallLeaderboard = () => {
                             </TableCell>
                           ))
                         )}
+
+                        <TableCell align="center" sx={{ color: '#fff7d6', fontWeight: 950, fontSize: { xs: '0.78rem', md: '0.9rem' } }}>
+                              {toNumber(user.group_points)}
+                            </TableCell>
 
                         <TableCell align="center" sx={{ color: '#fff7d6', fontWeight: 950, fontSize: { xs: '0.78rem', md: '0.9rem' } }}>
                           {userPoints}
