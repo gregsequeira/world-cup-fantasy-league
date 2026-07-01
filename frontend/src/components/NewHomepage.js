@@ -1,25 +1,48 @@
-import React, { useState } from 'react';
-import HeroSection from '../components/HeroSection';
+import React, { useEffect, useState } from 'react';
+import { Alert, Box } from '@mui/material';
+import axios from '../axiosConfig';
 import AnnouncementBanner from '../components/AnnouncementBanner';
-import FixturesTabs from '../components/FixturesTabs';
-import StandingsPage from '../components/StandingsPage';
-import OverallLeaderboard from '../components/OverallLeaderboard';
-import KnockoutBracket from '../components/KnockoutBracket';
-import { Tabs, Tab, Box, Fade, Paper } from '@mui/material';
-
-const tabs = [
-  { label: 'Leaderboard', component: <OverallLeaderboard /> },
-  { label: 'Fixtures', component: <FixturesTabs /> },
-  { label: 'Standings', component: <StandingsPage /> },
-  { label: 'Knockout Bracket', component: <KnockoutBracket /> },
-];
+import HeroSection from '../components/HeroSection';
+import TournamentPulse from '../components/TournamentPulse';
 
 const NewHomepage = () => {
-  const [tab, setTab] = useState(0);
+  const [fixtures, setFixtures] = useState([]);
+  const [scores, setScores] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleTabChange = (event, newValue) => {
-    setTab(newValue);
-  };
+  useEffect(() => {
+    let active = true;
+
+    Promise.allSettled([
+      axios.get('/fixtures'),
+      axios.get('/user-scores'),
+    ]).then(([fixturesResult, scoresResult]) => {
+      if (!active) return;
+
+      if (fixturesResult.status === 'fulfilled') {
+        setFixtures(Array.isArray(fixturesResult.value.data) ? fixturesResult.value.data : []);
+      } else {
+        console.error('Fixtures could not be loaded', fixturesResult.reason);
+      }
+
+      if (scoresResult.status === 'fulfilled') {
+        setScores(Array.isArray(scoresResult.value.data) ? scoresResult.value.data : []);
+      } else {
+        console.error('Leaderboard could not be loaded', scoresResult.reason);
+      }
+
+      if (fixturesResult.status === 'rejected' && scoresResult.status === 'rejected') {
+        setError('Tournament information could not be loaded. Please refresh the page shortly.');
+      }
+
+      setLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <Box
@@ -37,7 +60,9 @@ const NewHomepage = () => {
       <HeroSection />
 
       <Box
+        component="main"
         sx={{
+          width: '100%',
           maxWidth: 1280,
           mx: 'auto',
           px: { xs: 1.5, sm: 2, md: 3 },
@@ -45,88 +70,19 @@ const NewHomepage = () => {
           pb: { xs: 4, md: 6 },
         }}
       >
-        <AnnouncementBanner />
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        <Paper
-          elevation={0}
-          sx={{
-            mt: { xs: 2, md: 3 },
-            borderRadius: 2,
-            overflow: 'hidden',
-            background: 'rgba(255,255,255,0.94)',
-            border: '1px solid rgba(27,94,32,0.14)',
-            boxShadow: '0 18px 50px rgba(15, 23, 42, 0.12)',
-            backdropFilter: 'blur(10px)',
-          }}
-        >
-          <Box
-            sx={{
-              px: { xs: 1, md: 2 },
-              pt: { xs: 1, md: 1.5 },
-              background:
-                'linear-gradient(135deg, #0f3d2e 0%, #1b5e20 48%, #0f766e 100%)',
-              borderBottom: '1px solid rgba(255,255,255,0.18)',
-            }}
-          >
-            <Tabs
-              value={tab}
-              onChange={handleTabChange}
-              variant="scrollable"
-              scrollButtons="auto"
-              allowScrollButtonsMobile
-              TabIndicatorProps={{ sx: { display: 'none' } }}
-              sx={{
-                minHeight: 52,
-                '& .MuiTabs-flexContainer': {
-                  gap: 1,
-                },
-                '& .MuiTab-root': {
-                  minHeight: 44,
-                  minWidth: { xs: 'auto', md: 138 },
-                  px: { xs: 1.5, md: 2.5 },
-                  mb: 1,
-                  borderRadius: 1.5,
-                  color: 'rgba(255,255,255,0.76)',
-                  fontWeight: 800,
-                  fontSize: { xs: '0.78rem', md: '0.88rem' },
-                  textTransform: 'none',
-                  letterSpacing: 0,
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    color: '#fff',
-                    backgroundColor: 'rgba(255,255,255,0.12)',
-                  },
-                },
-                '& .Mui-selected': {
-                  color: '#113829 !important',
-                  backgroundColor: '#d9fbe8',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.18)',
-                },
-              }}
-            >
-              {tabs.map(item => (
-                <Tab key={item.label} label={item.label} />
-              ))}
-            </Tabs>
-          </Box>
+        <AnnouncementBanner
+          fixtures={fixtures}
+          scores={scores}
+          loading={loading}
+        />
 
-          <Box
-           sx={{
-        p: { xs: 1.25, md: 2 },
-        borderRadius: 2,
-        background:
-          'linear-gradient(135deg, rgba(15,61,46,0.90) 0%, rgba(27,94,32,0.58) 42%, rgba(245,158,11,0.22) 100%)',
-        border: '1px solid rgba(255,255,255,0.22)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
-      }}
-          >
-            {tabs.map((item, index) => (
-              <Fade key={item.label} in={tab === index} timeout={350} unmountOnExit>
-                <Box>{item.component}</Box>
-              </Fade>
-            ))}
-          </Box>
-        </Paper>
+        <TournamentPulse
+          fixtures={fixtures}
+          scores={scores}
+          loading={loading}
+        />
       </Box>
     </Box>
   );

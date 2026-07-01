@@ -1,262 +1,383 @@
-import React, { useEffect, useState } from 'react';
-import { Paper, Typography, Box, Chip, Button } from '@mui/material';
-import axios from '../axiosConfig';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Box,
+  Chip,
+  CircularProgress,
+  Fade,
+  IconButton,
+  LinearProgress,
+  Paper,
+  Typography,
+} from '@mui/material';
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import SportsSoccerRoundedIcon from '@mui/icons-material/SportsSoccerRounded';
 
-const getTimeParts = (cutoff) => {
-  if (!cutoff) return null;
+const ROTATION_TIME = 8000;
 
-  const diff = cutoff - new Date();
-
-  if (diff <= 0) {
-    return {
-      closed: true,
-      days: 0,
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-    };
-  }
-
-  return {
-    closed: false,
-    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((diff / (1000 * 60)) % 60),
-    seconds: Math.floor((diff / 1000) % 60),
-  };
+const ROUND_NAMES = {
+  1: 'Round 1',
+  2: 'Round 2',
+  3: 'Round 3',
+  4: 'Round of 32',
+  5: 'Round of 16',
+  6: 'Quarter-finals',
+  7: 'Semi-finals',
+  8: 'Final',
 };
 
-const CountdownChip = ({ value, label, pulse }) => (
-  <Box
-    sx={{
-      minWidth: 54,
-      px: 0.9,
-      py: 0.65,
-      borderRadius: 1.25,
-      background:
-        'linear-gradient(145deg, rgba(255,255,255,0.82) 0%, rgba(217,251,232,0.72) 100%)',
-      border: '1px solid rgba(27,94,32,0.14)',
-      boxShadow: '0 6px 14px rgba(15,23,42,0.08)',
-      textAlign: 'center',
-      animation: pulse ? 'bannerPulse 1s ease-in-out infinite' : 'none',
-    }}
-  >
-    <Typography
-      sx={{
-        color: '#12372a',
-        fontWeight: 950,
-        fontSize: { xs: '0.95rem', md: '1.1rem' },
-        lineHeight: 1,
-      }}
-    >
-      {String(value).padStart(2, '0')}
-    </Typography>
+const normaliseStatus = (status) => String(status || '').toLowerCase();
 
-    <Typography
-      variant="caption"
-      sx={{
-        display: 'block',
-        mt: 0.25,
-        color: '#60756b',
-        fontWeight: 850,
-        textTransform: 'uppercase',
-        fontSize: '0.58rem',
-        lineHeight: 1,
-      }}
-    >
-      {label}
-    </Typography>
-  </Box>
-);
+const fixtureDate = (fixture) => {
+  const date = String(fixture?.match_date || '').slice(0, 10);
+  const time = fixture?.match_time || '00:00:00';
+  return new Date(`${date}T${time}`);
+};
 
-const AnnouncementBanner = () => {
-  const [cutoff, setCutoff] = useState(null);
-  const [timeParts, setTimeParts] = useState(null);
+const formatFixtureDate = (fixture) => {
+  const date = fixtureDate(fixture);
+  if (Number.isNaN(date.getTime())) return 'Kick-off to be confirmed';
+
+  return new Intl.DateTimeFormat('en-ZA', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+};
+
+const formatTimeUntil = (fixture, now) => {
+  const difference = fixtureDate(fixture) - now;
+  if (!Number.isFinite(difference) || difference <= 0) return null;
+
+  const days = Math.floor(difference / 86400000);
+  const hours = Math.floor((difference / 3600000) % 24);
+  const minutes = Math.floor((difference / 60000) % 60);
+
+  if (days > 0) return `${days}d ${hours}h away`;
+  if (hours > 0) return `${hours}h ${minutes}m away`;
+  return `${Math.max(minutes, 1)}m away`;
+};
+
+const AnnouncementBanner = ({ fixtures = [], scores = [], loading = false }) => {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
-    axios.get('/cutoff')
-      .then(res => setCutoff(new Date(res.data.cutoff)))
-      .catch(err => console.error('Cutoff fetch failed', err));
+    const clock = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(clock);
   }, []);
 
-  useEffect(() => {
-    if (!cutoff) return;
+  const tournament = useMemo(() => {
+    const liveFixture = fixtures.find(
+      (fixture) => normaliseStatus(fixture.status) === 'live'
+    );
 
-    const updateTimer = () => {
-      setTimeParts(getTimeParts(cutoff));
+    const upcomingFixtures = fixtures
+      .filter((fixture) => {
+        const status = normaliseStatus(fixture.status);
+        return status !== 'completed' && fixtureDate(fixture) >= now;
+      })
+      .sort((a, b) => fixtureDate(a) - fixtureDate(b));
+
+    const featuredFixture = liveFixture || upcomingFixtures[0] || null;
+
+    const fixtureRounds = [...new Set(
+      fixtures.map((fixture) => Number(fixture.round)).filter(Boolean)
+    )].sort((a, b) => a - b);
+
+    const currentRound = liveFixture
+      ? Number(liveFixture.round)
+      : fixtureRounds.find((round) =>
+          fixtures.some(
+            (fixture) =>
+              Number(fixture.round) === round &&
+              normaliseStatus(fixture.status) !== 'completed'
+          )
+        ) || fixtureRounds[fixtureRounds.length - 1] || 4;
+
+    const roundFixtures = fixtures.filter(
+      (fixture) => Number(fixture.round) === currentRound
+    );
+    const completedFixtures = roundFixtures.filter(
+      (fixture) => normaliseStatus(fixture.status) === 'completed'
+    ).length;
+
+    return {
+      featuredFixture,
+      currentRound,
+      roundFixtures,
+      completedFixtures,
     };
+  }, [fixtures, now]);
 
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
+  const leaders = useMemo(() => {
+    const verifiedScores = scores
+      .filter((user) => user.verified)
+      .sort((a, b) => {
+        const pointsDifference = Number(b.total_points) - Number(a.total_points);
+        if (pointsDifference !== 0) return pointsDifference;
+        return Number(b.total_goal_difference) - Number(a.total_goal_difference);
+      });
 
-    return () => clearInterval(interval);
-  }, [cutoff]);
+    if (!verifiedScores.length) return [];
+    const first = verifiedScores[0];
 
-  const closed = timeParts?.closed;
+    return verifiedScores.filter(
+      (user) =>
+        Number(user.total_points) === Number(first.total_points) &&
+        Number(user.total_goal_difference) === Number(first.total_goal_difference)
+    );
+  }, [scores]);
+
+  const slides = useMemo(() => {
+    const fixture = tournament.featuredFixture;
+    const homeTeam = fixture?.home_team || fixture?.home_placeholder || 'To be confirmed';
+    const awayTeam = fixture?.away_team || fixture?.away_placeholder || 'To be confirmed';
+    const isLive = normaliseStatus(fixture?.status) === 'live';
+    const timeUntil = fixture ? formatTimeUntil(fixture, now) : null;
+    const leader = leaders[0];
+    const leaderNames = leaders.map((user) => user.user_name).join(' & ');
+    const roundTotal = tournament.roundFixtures.length;
+    const progress = roundTotal
+      ? (tournament.completedFixtures / roundTotal) * 100
+      : 0;
+
+    return [
+      {
+        id: 'fixture',
+        eyebrow: isLive ? 'Live now' : 'Next fixture',
+        icon: SportsSoccerRoundedIcon,
+        title: fixture ? `${homeTeam} vs ${awayTeam}` : 'Next fixture coming soon',
+        description: fixture
+          ? formatFixtureDate(fixture)
+          : 'The next confirmed fixture will appear here.',
+        chips: [
+          fixture && `Match ${fixture.id}`,
+          fixture && ROUND_NAMES[Number(fixture.round)],
+          isLive ? 'In progress' : timeUntil,
+        ].filter(Boolean),
+        accent: '#0f766e',
+      },
+      {
+        id: 'leader',
+        eyebrow: leaders.length > 1 ? 'Joint leaders' : 'Current leader',
+        icon: EmojiEventsRoundedIcon,
+        title: leader
+          ? leaders.length > 2
+            ? `${leaders.length} players share the lead`
+            : leaderNames
+          : 'Leaderboard awaiting results',
+        description: leader
+          ? 'Setting the pace as the knockout stage unfolds.'
+          : 'Scores will appear as completed results are entered.',
+        chips: leader
+          ? [`${leader.total_points} points`, `GD ${leader.total_goal_difference}`]
+          : [],
+        accent: '#b45309',
+      },
+      {
+        id: 'stage',
+        eyebrow: 'Tournament progress',
+        icon: GroupsRoundedIcon,
+        title: ROUND_NAMES[tournament.currentRound] || 'Knockout stage',
+        description: roundTotal
+          ? `${tournament.completedFixtures} of ${roundTotal} fixtures completed.`
+          : 'Fixtures will appear as the tournament progresses.',
+        chips: roundTotal
+          ? [`${roundTotal - tournament.completedFixtures} remaining`]
+          : [],
+        progress,
+        accent: '#1b5e20',
+      },
+    ];
+  }, [leaders, now, tournament]);
+
+  useEffect(() => {
+    if (paused || loading) return undefined;
+
+    const rotation = setInterval(() => {
+      setActiveSlide((current) => (current + 1) % slides.length);
+    }, ROTATION_TIME);
+
+    return () => clearInterval(rotation);
+  }, [loading, paused, slides.length]);
+
+  const showSlide = (index) => {
+    setActiveSlide((index + slides.length) % slides.length);
+  };
+
+  const slide = slides[activeSlide];
+  const SlideIcon = slide.icon;
 
   return (
     <Paper
       elevation={0}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
       sx={{
-        p: { xs: 2, md: 2.75 },
-        borderRadius: 2,
         position: 'relative',
-        background: closed
-          ? 'linear-gradient(135deg, rgba(254,226,226,0.98) 0%, rgba(255,248,225,0.96) 52%, rgba(232,245,233,0.94) 100%)'
-          : 'linear-gradient(135deg, rgba(255,248,225,0.98) 0%, rgba(255,236,179,0.96) 44%, rgba(232,245,233,0.96) 100%)',
-        color: '#163226',
-        border: '1px solid rgba(245,158,11,0.42)',
-        boxShadow: '0 16px 42px rgba(15,23,42,0.14)',
+        minHeight: { xs: 290, sm: 230 },
+        p: { xs: 2, md: 2.75 },
         overflow: 'hidden',
-        '@keyframes bannerPulse': {
-          '0%': {
-            transform: 'scale(1)',
-            boxShadow: '0 6px 14px rgba(15,23,42,0.08)',
-          },
-          '50%': {
-            transform: 'scale(1.04)',
-            boxShadow: '0 8px 18px rgba(245,158,11,0.18)',
-          },
-          '100%': {
-            transform: 'scale(1)',
-            boxShadow: '0 6px 14px rgba(15,23,42,0.08)',
-          },
-        },
+        borderRadius: 1,
+        color: '#163226',
+        background:
+          'linear-gradient(135deg, rgba(255,248,225,0.98) 0%, rgba(255,255,255,0.96) 48%, rgba(217,251,232,0.95) 100%)',
+        border: '1px solid rgba(245,158,11,0.36)',
+        boxShadow: '0 16px 42px rgba(15,23,42,0.14)',
       }}
     >
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1.35fr auto' },
-          gap: { xs: 2, md: 3 },
-          alignItems: 'center',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: 5,
+          bgcolor: slide.accent,
+          transition: 'background-color 300ms ease',
         }}
-      >
-        <Box>
-          <Chip
-            label={closed ? 'Selections Closed' : 'Knockout Stage'}
-            size="small"
-            sx={{
-              mb: 1.25,
-              height: 24,
-              borderRadius: 1.25,
-              backgroundColor: closed ? '#991b1b' : '#1b5e20',
-              color: '#fff',
-              fontWeight: 900,
-              fontSize: '0.7rem',
-            }}
-          />
+      />
 
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 950,
-              mb: 0.75,
-              color: '#12372a',
-              fontSize: { xs: '1.18rem', md: '1.55rem' },
-              letterSpacing: 0,
-            }}
-          >
-            {closed ? 'Knockout selections are closed' : 'Knockout selections coming soon'}
-          </Typography>
-
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#375448',
-              fontWeight: 650,
-              mb: 1.5,
-              lineHeight: 1.45,
-            }}
-          >
-            Choose your knockout favourite and three extra teams before the next stage begins.
-          </Typography>
-
+      {loading ? (
+        <Box sx={{ minHeight: { xs: 245, sm: 180 }, display: 'grid', placeItems: 'center' }}>
+          <Box sx={{ textAlign: 'center' }}>
+            <CircularProgress size={32} sx={{ color: '#0f766e' }} />
+            <Typography sx={{ mt: 1, color: '#375448', fontWeight: 750 }}>
+              Loading tournament update...
+            </Typography>
+          </Box>
+        </Box>
+      ) : (
+        <Fade key={slide.id} in timeout={450}>
           <Box
             sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 1,
+              minHeight: { xs: 245, sm: 180 },
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'auto minmax(0, 1fr)' },
+              gap: { xs: 1.5, md: 2.5 },
               alignItems: 'center',
             }}
           >
-            <Chip label="1 Favourite" size="small" sx={{ backgroundColor: '#d9fbe8', color: '#12372a', fontWeight: 800, borderRadius: 1.25 }} />
-            <Chip label="3 More Teams" size="small" sx={{ backgroundColor: '#e8f5e9', color: '#1b5e20', fontWeight: 800, borderRadius: 1.25 }} />
-            <Chip label="GD excludes penalties" size="small" sx={{ backgroundColor: '#fff3cd', color: '#8a5a00', fontWeight: 800, borderRadius: 1.25 }} />
+            <Box
+              sx={{
+                width: 58,
+                height: 58,
+                mx: { xs: 'auto', md: 0 },
+                display: 'grid',
+                placeItems: 'center',
+                borderRadius: 1,
+                color: '#fff',
+                bgcolor: slide.accent,
+                boxShadow: `0 10px 24px ${slide.accent}3d`,
+              }}
+            >
+              <SlideIcon sx={{ fontSize: 31 }} />
+            </Box>
 
-            {!timeParts ? (
+            <Box sx={{ minWidth: 0, textAlign: { xs: 'center', md: 'left' } }}>
               <Chip
-                label="Loading deadline..."
+                label={slide.eyebrow}
                 size="small"
                 sx={{
-                  backgroundColor: '#fff',
-                  color: '#b45309',
+                  mb: 1,
+                  height: 23,
+                  borderRadius: 1,
+                  bgcolor: `${slide.accent}18`,
+                  color: slide.accent,
+                  border: `1px solid ${slide.accent}33`,
                   fontWeight: 900,
-                  borderRadius: 1.25,
-                  border: '1px solid rgba(180,83,9,0.24)',
+                  fontSize: '0.68rem',
+                  textTransform: 'uppercase',
                 }}
               />
-            ) : closed ? (
-              <Chip
-                label="Selections closed"
-                size="small"
+
+              <Typography
+                component="h2"
                 sx={{
-                  backgroundColor: '#fee2e2',
-                  color: '#991b1b',
-                  fontWeight: 900,
-                  borderRadius: 1.25,
-                  border: '1px solid rgba(153,27,27,0.22)',
-                }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 0.75,
-                  alignItems: 'center',
+                  color: '#12372a',
+                  fontWeight: 950,
+                  fontSize: { xs: '1.18rem', md: '1.55rem' },
+                  lineHeight: 1.2,
                 }}
               >
-                <CountdownChip value={timeParts.days} label="Days" />
-                <CountdownChip value={timeParts.hours} label="Hrs" />
-                <CountdownChip value={timeParts.minutes} label="Mins" />
-                <CountdownChip value={timeParts.seconds} label="Secs" pulse />
-              </Box>
-            )}
-          </Box>
-        </Box>
+                {slide.title}
+              </Typography>
 
-        <Button
-          variant="contained"
-          fullWidth
-          disabled={closed}
-          sx={{
-            minWidth: { md: 220 },
-            py: 1.15,
-            borderRadius: 1.5,
-            textTransform: 'none',
-            fontWeight: 900,
-            color: '#fff',
-            backgroundColor: '#0f766e',
-            boxShadow: '0 10px 22px rgba(15,118,110,0.24)',
-            '&:hover': {
-              backgroundColor: '#0b625c',
-            },
-            '&.Mui-disabled': {
-              backgroundColor: 'rgba(15,118,110,0.32)',
-              color: 'rgba(255,255,255,0.7)',
-              boxShadow: 'none',
-            },
-          }}
-          onClick={() => {
-            window.location.href = '/knockout';
-          }}
-        >
-          Make Knockout Picks
-        </Button>
+              <Typography sx={{ mt: 0.7, color: '#4d685c', fontWeight: 650, fontSize: '0.87rem' }}>
+                {slide.description}
+              </Typography>
+
+              {slide.progress !== undefined && (
+                <LinearProgress
+                  variant="determinate"
+                  value={slide.progress}
+                  sx={{
+                    mt: 1.5,
+                    maxWidth: 430,
+                    mx: { xs: 'auto', md: 0 },
+                    height: 7,
+                    borderRadius: 1,
+                    bgcolor: 'rgba(27,94,32,0.12)',
+                    '& .MuiLinearProgress-bar': { bgcolor: slide.accent },
+                  }}
+                />
+              )}
+
+              {!!slide.chips.length && (
+                <Box sx={{ mt: 1.3, display: 'flex', flexWrap: 'wrap', justifyContent: { xs: 'center', md: 'flex-start' }, gap: 0.7 }}>
+                  {slide.chips.map((chip) => (
+                    <Chip
+                      key={chip}
+                      label={chip}
+                      size="small"
+                      sx={{ height: 24, borderRadius: 1, bgcolor: '#fff', color: '#375448', fontWeight: 800, border: '1px solid rgba(27,94,32,0.13)' }}
+                    />
+                  ))}
+                </Box>
+              )}
+            </Box>
+
+          </Box>
+        </Fade>
+      )}
+
+      <Box sx={{ mt: 1.2, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5 }}>
+        <IconButton size="small" aria-label="Previous update" onClick={() => showSlide(activeSlide - 1)}>
+          <ChevronLeftRoundedIcon />
+        </IconButton>
+
+        {slides.map((item, index) => (
+          <Box
+            key={item.id}
+            component="button"
+            type="button"
+            aria-label={`Show ${item.eyebrow}`}
+            onClick={() => showSlide(index)}
+            sx={{
+              width: index === activeSlide ? 24 : 8,
+              height: 8,
+              p: 0,
+              border: 0,
+              borderRadius: 1,
+              cursor: 'pointer',
+              bgcolor: index === activeSlide ? slide.accent : 'rgba(55,84,72,0.24)',
+              transition: 'all 220ms ease',
+            }}
+          />
+        ))}
+
+        <IconButton size="small" aria-label="Next update" onClick={() => showSlide(activeSlide + 1)}>
+          <ChevronRightRoundedIcon />
+        </IconButton>
       </Box>
     </Paper>
   );
 };
 
-export default AnnouncementBanner;  
+export default AnnouncementBanner;
