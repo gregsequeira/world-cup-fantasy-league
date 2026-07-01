@@ -460,8 +460,8 @@ function Navbar() {
 
           {drawerItem(
             <TableChartRounded />,
-            'Standings',
-            '/standings'
+            'Knockout Bracket',
+            '/bracket'
           )}
 
           {drawerItem(
