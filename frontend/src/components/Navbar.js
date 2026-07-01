@@ -286,11 +286,11 @@ function Navbar() {
 
               <Button
                 component={NavLink}
-                to="/standings"
-                sx={navButtonStyle(location.pathname === '/standings')}
+                to="/bracket"
+                sx={navButtonStyle(location.pathname === '/bracket')}
                 startIcon={<TableChartRounded />}
               >
-                Standings
+                Knockout Bracket
               </Button>
 
               <Button

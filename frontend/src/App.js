@@ -13,6 +13,9 @@ import AdminUsers from './components/AdminUsers';
 import NewHomepage from './components/NewHomepage';
 import KnockoutResultsPage from './components/KnockoutResultsPage';
 import KnockoutSelectionsPage from './components/KnockoutSelectionsPage';
+import FixturesTabs from './components/FixturesTabs';
+import StandingsPage from './components/StandingsPage';
+import KnockoutBracket from './components/KnockoutBracket';
 
 const theme = createTheme({
   palette: {
@@ -69,6 +72,10 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/fixtures" element={<FixturesTabs />} />
+          <Route path="/standings" element={<StandingsPage />} />
+          <Route path="/bracket" element={<KnockoutBracket />} />
 
           {/* Teams selection */}
           <Route
