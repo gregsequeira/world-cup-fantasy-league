@@ -44,7 +44,7 @@ function LoginModal({ open, onClose, onLogin }) {
     if (user.role === 'admin') {
       navigate('/admin');       // Admin Dashboard
     } else {
-      navigate('/dashboard');   // Normal user Dashboard
+      navigate('/');   // Normal user Dashboard
     }
   } catch (err) {
     console.error(err);
