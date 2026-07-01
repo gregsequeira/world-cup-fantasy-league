@@ -1,630 +1,404 @@
-import React, { useEffect, useState } from 'react';
-import axios from '../axiosConfig';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   Box,
-  Typography,
+  Chip,
+  CircularProgress,
   List,
   ListItem,
-  Paper,
-  Chip,
+  Typography,
 } from '@mui/material';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
+import SportsSoccerRoundedIcon from '@mui/icons-material/SportsSoccerRounded';
 import Flag from 'react-world-flags';
+import axios from '../axiosConfig';
 import { formatShortDate, formatShortTime } from '../utils/dateUtils';
 
-function FixturesPage({ fixturesOverride }) {
-  const [fixtures, setFixtures] = useState([]);
+const ROUND_TITLES = {
+  1: 'Round 1',
+  2: 'Round 2',
+  3: 'Round 3',
+  4: 'Round of 32',
+  5: 'Round of 16',
+  6: 'Quarter-finals',
+  7: 'Semi-finals',
+  8: 'Final',
+};
 
-  // Used only to refresh countdown timers every minute
-  const [, forceUpdate] = useState(0);
+const normaliseStatus = (status) => String(status || '').toLowerCase();
+const hasValue = (value) => value !== null && value !== undefined && value !== '';
+
+const FixturesPage = ({ fixturesOverride, loadingOverride = false, errorOverride = '' }) => {
+  const [fixtures, setFixtures] = useState([]);
+  const [loading, setLoading] = useState(!Array.isArray(fixturesOverride));
+  const [error, setError] = useState('');
+  const [, refreshCountdown] = useState(0);
 
   useEffect(() => {
-    if (!fixturesOverride) {
-      axios
-        .get('/fixtures')
-        .then((res) => setFixtures(res.data))
-        .catch((err) => console.error(err));
-    }
+    if (Array.isArray(fixturesOverride)) return undefined;
+
+    let active = true;
+    setLoading(true);
+
+    axios
+      .get('/fixtures')
+      .then((response) => {
+        if (active) setFixtures(Array.isArray(response.data) ? response.data : []);
+      })
+      .catch((requestError) => {
+        console.error(requestError);
+        if (active) setError('Fixtures could not be loaded. Please try again shortly.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [fixturesOverride]);
 
-  // Refresh countdown every minute
   useEffect(() => {
-    const timer = setInterval(() => {
-      forceUpdate((v) => v + 1);
-    }, 60000);
-
+    const timer = setInterval(() => refreshCountdown((value) => value + 1), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  const data = fixturesOverride || fixtures;
+  const data = Array.isArray(fixturesOverride) ? fixturesOverride : fixtures;
+  const isLoading = Array.isArray(fixturesOverride) ? loadingOverride : loading;
+  const requestError = Array.isArray(fixturesOverride) ? errorOverride : error;
 
-  // Group fixtures by round
-  const groupedByRound = data.reduce((acc, fixture) => {
-    const round = fixture.round || 'UNASSIGNED';
+  const groupedFixtures = useMemo(() => {
+    const groups = data.reduce((result, fixture) => {
+      const round = fixture.round || 'UNASSIGNED';
+      if (!result[round]) result[round] = [];
+      result[round].push(fixture);
+      return result;
+    }, {});
 
-    if (!acc[round]) acc[round] = [];
+    Object.values(groups).forEach((roundFixtures) => {
+      roundFixtures.sort((a, b) => {
+        const aDate = `${String(a.match_date || '').slice(0, 10)}T${a.match_time || '00:00'}`;
+        const bDate = `${String(b.match_date || '').slice(0, 10)}T${b.match_time || '00:00'}`;
+        return new Date(aDate) - new Date(bDate);
+      });
+    });
 
-    acc[round].push(fixture);
+    return groups;
+  }, [data]);
 
-    return acc;
-  }, {});
-
-  const sortedRounds = Object.keys(groupedByRound).sort((a, b) => {
+  const sortedRounds = Object.keys(groupedFixtures).sort((a, b) => {
     if (a === 'UNASSIGNED') return 1;
     if (b === 'UNASSIGNED') return -1;
-
     return Number(a) - Number(b);
   });
 
-  const roundTitles = {
-    1: 'Round 1',
-    2: 'Round 2',
-    3: 'Round 3',
-    4: 'Round of 32',
-    5: 'Round of 16',
-    6: 'Quarter-Finals',
-    7: 'Semi-Finals',
-    8: 'Final',
-  };
-
-  // ------------------------
-  // Helper Functions
-  // ------------------------
-
   const getMatchDateTime = (fixture) => {
-    return new Date(`${fixture.match_date}T${fixture.match_time}`);
+    const date = String(fixture.match_date || '').slice(0, 10);
+    const time = fixture.match_time || '00:00:00';
+    return new Date(`${date}T${time}`);
   };
 
   const getCountdown = (fixture) => {
-    const now = new Date();
-    const kickoff = getMatchDateTime(fixture);
+    const difference = getMatchDateTime(fixture) - new Date();
+    if (!Number.isFinite(difference) || difference <= 0) return '';
 
-    const diff = kickoff - now;
+    const days = Math.floor(difference / 86400000);
+    const hours = Math.floor((difference / 3600000) % 24);
+    const minutes = Math.floor((difference / 60000) % 60);
 
-    if (diff <= 0) return null;
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const mins = Math.floor((diff / (1000 * 60)) % 60);
-
-    if (days > 0) {
-      return `${days}d ${hours}h`;
-    }
-
-    if (hours > 0) {
-      return `${hours}h ${mins}m`;
-    }
-
-    return `${mins}m`;
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
   };
 
-  const isCompleted = (fixture) => {
-    return fixture.status === 'Completed';
+  const getWinnerSide = (fixture) => {
+    if (normaliseStatus(fixture.status) !== 'completed') return null;
+
+    if (hasValue(fixture.winner_team_id)) {
+      if (String(fixture.winner_team_id) === String(fixture.home_team_id)) return 'home';
+      if (String(fixture.winner_team_id) === String(fixture.away_team_id)) return 'away';
+    }
+
+    const homeScore = Number(fixture.home_score);
+    const awayScore = Number(fixture.away_score);
+    if (homeScore > awayScore) return 'home';
+    if (awayScore > homeScore) return 'away';
+
+    const homePenalties = Number(fixture.penalty_home);
+    const awayPenalties = Number(fixture.penalty_away);
+    if (homePenalties > awayPenalties) return 'home';
+    if (awayPenalties > homePenalties) return 'away';
+    return null;
   };
 
-  const isWinner = (fixture, side) => {
-    if (!isCompleted(fixture)) return false;
+  const getStatus = (fixture) => {
+    const status = normaliseStatus(fixture.status);
+    if (status === 'completed') return { label: 'Full time', color: '#fff', background: '#1b5e20' };
+    if (status === 'live') return { label: 'Live', color: '#fff', background: '#c62828', live: true };
 
-    if (side === 'home') {
-      return fixture.home_score > fixture.away_score;
-    }
-
-    return fixture.away_score > fixture.home_score;
-  };
-
-  const statusChip = (fixture) => {
-    if (fixture.status === 'Completed') {
-      return {
-        label: 'FULL TIME',
-        background: '#1b5e20',
-        color: '#fff',
-      };
-    }
-
-    if (fixture.status === 'Live') {
-      return {
-        label: 'LIVE',
-        background: '#d32f2f',
-        color: '#fff',
-      };
-    }
-
+    const countdown = getCountdown(fixture);
     return {
-      label: `Kick-off ${getCountdown(fixture) ?? ''}`,
-      background: '#f59e0b',
+      label: countdown ? `Kick-off in ${countdown}` : 'Upcoming',
       color: '#fff',
+      background: '#b45309',
     };
   };
 
   const formatScore = (fixture, side) => {
-    if (fixture.status === 'Upcoming') {
-      return '-';
+    const status = normaliseStatus(fixture.status);
+    if (!['live', 'completed'].includes(status)) return '-';
+
+    const score = side === 'home' ? fixture.home_score : fixture.away_score;
+    const penalties = side === 'home' ? fixture.penalty_home : fixture.penalty_away;
+    if (!hasValue(score)) return '-';
+
+    if (String(fixture.decided_by).toLowerCase() === 'penalties' && hasValue(penalties)) {
+      return `${score} (${penalties})`;
     }
 
-    if (side === 'home') {
-      if (
-        fixture.decided_by === 'penalties' &&
-        fixture.penalty_home !== null
-      ) {
-        return `${fixture.home_score} (${fixture.penalty_home})`;
-      }
-
-      return fixture.home_score;
-    }
-
-    if (
-      fixture.decided_by === 'penalties' &&
-      fixture.penalty_away !== null
-    ) {
-      return `${fixture.away_score} (${fixture.penalty_away})`;
-    }
-
-    return fixture.away_score;
+    return score;
   };
 
+  const getTeam = (fixture, side) => ({
+    name:
+      fixture[`${side}_team`] ||
+      fixture[`${side}_placeholder`] ||
+      'To be confirmed',
+    flag: fixture[`${side}_flag`],
+  });
+
+  if (isLoading) {
     return (
+      <Box sx={{ minHeight: 240, display: 'grid', placeItems: 'center' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={34} sx={{ color: '#0f766e' }} />
+          <Typography sx={{ mt: 1, color: '#375448', fontWeight: 700 }}>Loading fixtures...</Typography>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (requestError) return <Alert severity="error" sx={{ my: 2 }}>{requestError}</Alert>;
+
+  if (!sortedRounds.length) {
+    return (
+      <Box sx={{ py: 7, textAlign: 'center' }}>
+        <SportsEmptyState />
+        <Typography sx={{ mt: 1.5, color: '#375448', fontWeight: 800 }}>
+          No fixtures have been added for this round yet.
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
     <Box
       sx={{
-        p: { xs: 2, md: 3 },
+        py: { xs: 2, md: 3 },
         maxWidth: 1120,
         mx: 'auto',
-
-        backgroundImage: 'url(/images/background1.png)',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
-        backgroundSize: 'cover',
-
-        borderRadius: 4,
-
-        '@keyframes pulse': {
-          '0%': {
-            transform: 'scale(1)',
-            opacity: 1,
-          },
-          '50%': {
-            transform: 'scale(1.08)',
-            opacity: 0.75,
-          },
-          '100%': {
-            transform: 'scale(1)',
-            opacity: 1,
-          },
+        '@keyframes livePulse': {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(198,40,40,0.35)' },
+          '50%': { boxShadow: '0 0 0 7px rgba(198,40,40,0)' },
         },
       }}
     >
       {sortedRounds.map((round) => (
-        <Paper
-          key={round}
-          elevation={3}
-          sx={{
-            mb: 4,
-            overflow: 'hidden',
-            borderRadius: 5,
-            background:
-              'linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(247,250,248,.96) 100%)',
-          }}
-        >
-          {/* Round Header */}
-
+        <Box key={round} component="section" sx={{ mb: 3 }}>
           <Box
             sx={{
-              py: 2,
+              py: 1.5,
+              px: 2,
+              borderRadius: '8px 8px 0 0',
               textAlign: 'center',
-              background:
-                'linear-gradient(135deg,#0f3d2e 0%,#1b5e20 100%)',
+              background: 'linear-gradient(135deg, #0f3d2e 0%, #1b5e20 100%)',
             }}
           >
-            <Typography
-              variant="h5"
-              sx={{
-                color: '#fff',
-                fontWeight: 900,
-                letterSpacing: 1,
-              }}
-            >
-              {round === 'UNASSIGNED'
-                ? 'UNASSIGNED ROUND'
-                : roundTitles[Number(round)]}
+            <Typography component="h3" sx={{ color: '#fff', fontWeight: 900, fontSize: { xs: '1rem', md: '1.2rem' } }}>
+              {round === 'UNASSIGNED' ? 'Unassigned round' : ROUND_TITLES[Number(round)]}
             </Typography>
           </Box>
 
-          <Box
+          <List
+            disablePadding
             sx={{
-              p: {
-                xs: 2,
-                md: 3,
-              },
+              p: { xs: 1, md: 1.5 },
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.25,
+              border: '1px solid rgba(27,94,32,0.13)',
+              borderTop: 0,
+              borderRadius: '0 0 8px 8px',
+              background: 'rgba(255,255,255,0.44)',
             }}
           >
-            <List
-              disablePadding
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}
-            >
-              {groupedByRound[round]
-                .sort((a, b) => {
-                  const dateA = new Date(
-                    `${a.match_date}T${a.match_time || '00:00'}`
-                  );
+            {groupedFixtures[round].map((fixture) => {
+              const status = getStatus(fixture);
+              const winnerSide = getWinnerSide(fixture);
+              const home = getTeam(fixture, 'home');
+              const away = getTeam(fixture, 'away');
+              const completed = normaliseStatus(fixture.status) === 'completed';
+              const winnerName = winnerSide ? (winnerSide === 'home' ? home.name : away.name) : '';
 
-                  const dateB = new Date(
-                    `${b.match_date}T${b.match_time || '00:00'}`
-                  );
+              return (
+                <ListItem
+                  key={fixture.id}
+                  sx={{
+                    p: { xs: 1.5, md: 2 },
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: '125px minmax(0, 1fr) 175px' },
+                    gap: { xs: 1.5, md: 2.5 },
+                    alignItems: 'center',
+                    borderRadius: 1,
+                    background: completed
+                      ? 'linear-gradient(135deg, rgba(232,245,233,0.98) 0%, rgba(255,255,255,0.98) 100%)'
+                      : 'rgba(255,255,255,0.94)',
+                    border: completed ? '1px solid rgba(27,94,32,0.32)' : '1px solid rgba(15,118,110,0.14)',
+                    boxShadow: '0 8px 22px rgba(15,23,42,0.09)',
+                    transition: 'transform 180ms ease, box-shadow 180ms ease',
+                    '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 13px 28px rgba(15,23,42,0.13)' },
+                  }}
+                >
+                  <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+                    <Typography sx={{ color: '#12372a', fontWeight: 900, fontSize: '0.9rem' }}>
+                      {formatShortDate(fixture.match_date)}
+                    </Typography>
+                    <Typography sx={{ mt: 0.2, color: '#5c7267', fontSize: '0.8rem', fontWeight: 700 }}>
+                      {formatShortTime(fixture.match_time)}
+                    </Typography>
+                  </Box>
 
-                  return dateA - dateB;
-                })
-                .map((fixture) => {
-                  const chip = statusChip(fixture);
+                  <Box>
+                    <Box sx={{ mb: 1.25, display: 'flex', justifyContent: 'center' }}>
+                      <Chip
+                        label={status.label}
+                        size="small"
+                        sx={{
+                          height: 24,
+                          borderRadius: 1,
+                          color: status.color,
+                          bgcolor: status.background,
+                          fontWeight: 900,
+                          fontSize: '0.68rem',
+                          textTransform: 'uppercase',
+                          ...(status.live ? { animation: 'livePulse 1.4s ease-in-out infinite' } : {}),
+                        }}
+                      />
+                    </Box>
 
-                  return (
-                    <ListItem
-                      key={fixture.id}
+                    <Box
                       sx={{
-                        flexDirection: {
-                          xs: 'column',
-                          md: 'row',
-                        },
-
-                        alignItems: {
-                          xs: 'stretch',
-                          md: 'center',
-                        },
-
-                        width: '100%',
-
-                        p: {
-                          xs: 2.5,
-                          md: 3,
-                        },
-
-                        mb: 1,
-
-                        borderRadius: 4,
-
-                        overflow: 'hidden',
-
-                        background:
-                          'linear-gradient(145deg, rgba(255,255,255,.98) 0%, rgba(236,247,241,.98) 100%)',
-
-                        border: isCompleted(fixture)
-                          ? '2px solid rgba(27,94,32,.35)'
-                          : '1px solid rgba(217,251,232,.80)',
-
-                        boxShadow: isCompleted(fixture)
-                          ? '0 16px 34px rgba(27,94,32,.18)'
-                          : '0 10px 26px rgba(15,23,42,.12)',
-
-                        transition: '.25s',
-
-                        '&:hover': {
-                          transform: 'translateY(-4px)',
-                          boxShadow:
-                            '0 22px 40px rgba(15,23,42,.18)',
-                        },
+                        display: 'grid',
+                        gridTemplateColumns: { xs: 'minmax(0,1fr) 48px 20px 48px minmax(0,1fr)', sm: 'minmax(130px,1fr) 62px 26px 62px minmax(130px,1fr)' },
+                        gap: { xs: 0.5, sm: 1 },
+                        alignItems: 'center',
                       }}
                     >
-                      {/* Status Chip */}
+                      <TeamIdentity team={home} winner={winnerSide === 'home'} side="home" />
+                      <Score value={formatScore(fixture, 'home')} winner={winnerSide === 'home'} />
+                      <Typography sx={{ textAlign: 'center', color: '#6b7f75', fontWeight: 900, fontSize: '0.75rem' }}>VS</Typography>
+                      <Score value={formatScore(fixture, 'away')} winner={winnerSide === 'away'} />
+                      <TeamIdentity team={away} winner={winnerSide === 'away'} side="away" />
+                    </Box>
+                  </Box>
 
-                      <Box
-                        sx={{
-                          width: '100%',
-                          display: 'flex',
-                          justifyContent: 'center',
-                          mb: 2,
-                        }}
-                      >
-                        <Chip
-                          label={chip.label}
-                          sx={{
-                            background: chip.background,
-                            color: chip.color,
-                            fontWeight: 900,
-                            letterSpacing: 1,
-                            px: 1,
-
-                            ...(fixture.status === 'Live'
-                              ? {
-                                  animation:
-                                    'pulse 1.3s infinite',
-                                }
-                              : {}),
-                          }}
-                        />
+                  <Box sx={{ minWidth: 0, textAlign: { xs: 'center', md: 'right' } }}>
+                    {fixture.venue && (
+                      <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-end' }, alignItems: 'center', gap: 0.5 }}>
+                        <PlaceRoundedIcon sx={{ color: '#0f766e', fontSize: 16 }} />
+                        <Typography noWrap title={fixture.venue} sx={{ color: '#5c7267', fontWeight: 750, fontSize: '0.78rem' }}>
+                          {fixture.venue}
+                        </Typography>
                       </Box>
-                                            {/* Match Details */}
+                    )}
 
-                      <Box
-                        sx={{
-                          width: '100%',
-                          display: 'flex',
-                          flexDirection: {
-                            xs: 'column',
-                            md: 'row',
-                          },
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 3,
-                        }}
-                      >
+                    {completed &&
+                      winnerName &&
+                      Number(fixture.round) >= 4 &&
+                      Number(fixture.round) < 8 && (
+                      <Chip
+                        icon={<CheckCircleRoundedIcon />}
+                        label={`${winnerName} advances`}
+                        size="small"
+                        sx={{ mt: fixture.venue ? 1 : 0, maxWidth: '100%', borderRadius: 1, bgcolor: '#d9fbe8', color: '#12372a', fontWeight: 850 }}
+                      />
+                    )}
 
-                        {/* Match Date */}
-
-                        <Box
-                          sx={{
-                            minWidth: { xs: '100%', md: 120 },
-                            textAlign: { xs: 'center', md: 'left' },
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontWeight: 900,
-                              color: '#12372a',
-                              fontSize: '.95rem',
-                            }}
-                          >
-                            {formatShortDate(fixture.match_date)}
-                          </Typography>
-
-                          <Typography
-                            sx={{
-                              color: '#5c7267',
-                              fontSize: '.82rem',
-                            }}
-                          >
-                            {formatShortTime(fixture.match_time)}
-                          </Typography>
-                        </Box>
-
-                        {/* Match Centre */}
-
-                        <Box
-                          sx={{
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: 2,
-                          }}
-                        >
-
-                          {/* Teams */}
-
-                          <Box
-                            sx={{
-                              width: '100%',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                            }}
-                          >
-
-                            {/* Home Team */}
-
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                width: '42%',
-                              }}
-                            >
-                              <Flag
-                                code={fixture.home_flag}
-                                style={{
-                                  width: 34,
-                                  height: 24,
-                                  borderRadius: 3,
-                                }}
-                              />
-
-                              <Typography
-                                sx={{
-  fontWeight: isWinner(fixture, 'home') ? 900 : 700,
-  color: isWinner(fixture, 'home')
-    ? '#1b5e20'
-    : '#12372a',
-  transition: '.25s',
-}}
-                              >
-                                {fixture.home_team}
-                              </Typography>
-
-                              {isWinner(fixture, 'home') && (
-                                <Typography
-                                  sx={{
-                                    color: '#1b5e20',
-                                    fontWeight: 900,
-                                  }}
-                                >
-                                  ✓
-                                </Typography>
-                              )}
-                            </Box>
-
-                            {/* Away Team */}
-
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                                alignItems: 'center',
-                                gap: 1,
-                                width: '42%',
-                              }}
-                            >
-                              {isWinner(fixture, 'away') && (
-                                <Typography
-                                  sx={{
-                                    color: '#1b5e20',
-                                    fontWeight: 900,
-                                  }}
-                                >
-                                  ✓
-                                </Typography>
-                              )}
-
-                              <Typography
-                                sx={{
-  fontWeight: isWinner(fixture, 'away') ? 900 : 700,
-  color: isWinner(fixture, 'away')
-    ? '#1b5e20'
-    : '#12372a',
-  transition: '.25s',
-}}
-                              >
-                                {fixture.away_team}
-                              </Typography>
-
-                              <Flag
-                                code={fixture.away_flag}
-                                style={{
-                                  width: 34,
-                                  height: 24,
-                                  borderRadius: 3,
-                                }}
-                              />
-                            </Box>
-
-                          </Box>
-
-                          {/* Score */}
-
-                          <Box
-  sx={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-    px: 3,
-    py: 1.25,
-    borderRadius: 3,
-    background:
-      fixture.status === 'Completed'
-        ? 'linear-gradient(135deg,#0f3d2e,#1b5e20)'
-        : 'linear-gradient(135deg,#607d8b,#78909c)',
-    boxShadow:
-      fixture.status === 'Completed'
-        ? '0 10px 28px rgba(27,94,32,.35)'
-        : '0 8px 20px rgba(96,125,139,.25)',
-    minWidth: 190,
-  }}
->
-
-  <Typography
-    sx={{
-      color: '#fff',
-      fontWeight: 900,
-      fontSize: {
-        xs: '2rem',
-        md: '2.8rem',
-      },
-      minWidth: 45,
-      textAlign: 'center',
-    }}
-  >
-    {formatScore(fixture, 'home')}
-  </Typography>
-
-  <Typography
-    sx={{
-      color: 'rgba(255,255,255,.8)',
-      fontSize: '2rem',
-      fontWeight: 300,
-    }}
-  >
-    —
-  </Typography>
-
-  <Typography
-    sx={{
-      color: '#fff',
-      fontWeight: 900,
-      fontSize: {
-        xs: '2rem',
-        md: '2.8rem',
-      },
-      minWidth: 45,
-      textAlign: 'center',
-    }}
-  >
-    {formatScore(fixture, 'away')}
-  </Typography>
-
-</Box>
-
-                          </Box>
-
-                        </Box>
-
-                        {/* Venue & Result */}
-
-<Box
-  sx={{
-    minWidth: { xs: '100%', md: 190 },
-    textAlign: { xs: 'center', md: 'right' },
-  }}
->
-  {fixture.venue && (
-    <Typography
-      sx={{
-        color: '#5c7267',
-        fontWeight: 700,
-        fontSize: '.82rem',
-        mb: 1,
-      }}
-    >
-      📍 {fixture.venue}
-    </Typography>
-  )}
-
-  {fixture.status === 'Completed' &&
- Number(fixture.round) >= 4 &&
- Number(fixture.round) < 8 && (
-  <Chip
-    label={
-      fixture.home_score > fixture.away_score
-        ? `${fixture.home_team} Advances`
-        : `${fixture.away_team} Advances`
-    }
-    size="small"
-    sx={{
-      background:
-        'linear-gradient(135deg,#1b5e20,#2e7d32)',
-      color: '#fff',
-      fontWeight: 900,
-      borderRadius: 4,
-      boxShadow: '0 6px 18px rgba(27,94,32,.35)',
-    }}
-  />
-)}
-
-{fixture.status === 'Completed' &&
- Number(fixture.round) === 8 && (
-  <Chip
-    label="🏆 World Champions"
-    size="small"
-    sx={{
-      background:
-        'linear-gradient(135deg,#b8860b,#f5c542)',
-      color: '#fff',
-      fontWeight: 900,
-      borderRadius: 4,
-      boxShadow: '0 8px 24px rgba(184,134,11,.40)',
-    }}
-  />
-)}
-</Box>
-                                          </ListItem>
-                  );
-                })}
-            </List>
-          </Box>
-        </Paper>
+                    {completed && winnerName && Number(fixture.round) === 8 && (
+                      <Chip
+                        icon={<EmojiEventsRoundedIcon />}
+                        label={`${winnerName} - World champions`}
+                        size="small"
+                        sx={{ mt: fixture.venue ? 1 : 0, maxWidth: '100%', borderRadius: 1, bgcolor: '#fff3cd', color: '#8a5a00', fontWeight: 900 }}
+                      />
+                    )}
+                  </Box>
+                </ListItem>
+              );
+            })}
+          </List>
+        </Box>
       ))}
     </Box>
   );
-}
+};
+
+const TeamIdentity = ({ team, winner, side }) => (
+  <Box
+    sx={{
+      minWidth: 0,
+      display: 'flex',
+      flexDirection: side === 'away' ? 'row-reverse' : 'row',
+      justifyContent: side === 'away' ? 'flex-start' : 'flex-start',
+      alignItems: 'center',
+      gap: { xs: 0.5, sm: 0.8 },
+    }}
+  >
+    {team.flag && (
+      <Flag
+        code={team.flag}
+        style={{ width: 28, height: 19, borderRadius: 2, flexShrink: 0, objectFit: 'cover' }}
+      />
+    )}
+    <Typography
+      noWrap
+      title={team.name}
+      sx={{
+        minWidth: 0,
+        color: winner ? '#1b5e20' : '#12372a',
+        fontWeight: winner ? 950 : 750,
+        fontSize: { xs: '0.72rem', sm: '0.9rem' },
+        textAlign: side === 'away' ? 'right' : 'left',
+      }}
+    >
+      {team.name}
+    </Typography>
+  </Box>
+);
+
+const Score = ({ value, winner }) => (
+  <Box
+    sx={{
+      minHeight: { xs: 40, sm: 48 },
+      px: 0.5,
+      display: 'grid',
+      placeItems: 'center',
+      borderRadius: 1,
+      color: '#fff',
+      bgcolor: winner ? '#1b5e20' : '#375448',
+      boxShadow: winner ? '0 7px 16px rgba(27,94,32,0.24)' : 'none',
+    }}
+  >
+    <Typography sx={{ fontWeight: 950, fontSize: { xs: '0.95rem', sm: '1.2rem' }, whiteSpace: 'nowrap' }}>
+      {value}
+    </Typography>
+  </Box>
+);
+
+const SportsEmptyState = () => (
+  <SportsSoccerRoundedIcon sx={{ color: '#0f766e', fontSize: 42, opacity: 0.7 }} />
+);
 
 export default FixturesPage;

@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import axios from '../axiosConfig';
+import React, { useMemo } from 'react';
 import FixturesPage from './FixturesPage';
 
-function FixturesByRound({ round }) {
-  const [fixtures, setFixtures] = useState([]);
+const FixturesByRound = ({ fixtures, loading, error, round }) => {
+  const filteredFixtures = useMemo(
+    () => fixtures.filter((fixture) => String(fixture.round) === String(round)),
+    [fixtures, round]
+  );
 
-  useEffect(() => {
-    axios.get('/fixtures')
-      .then(res => setFixtures(res.data))
-      .catch(err => console.error(err));
-  }, []);
-
-  const filteredFixtures = fixtures.filter(f => String(f.round) === String(round));
-
-  return <FixturesPage fixturesOverride={filteredFixtures} />;
-}
+  return (
+    <FixturesPage
+      fixturesOverride={filteredFixtures}
+      loadingOverride={loading}
+      errorOverride={error}
+    />
+  );
+};
 
 export default FixturesByRound;
