@@ -53,6 +53,23 @@ const knockoutRoleMeta = {
 const KnockoutPickCard = ({ role, team }) => {
   const meta = knockoutRoleMeta[role];
   const isGold = meta.accent === 'gold';
+  const [stats, setStats] = useState(null);
+
+useEffect(() => {
+  if (!team?.id) return;
+
+
+  axios
+    .get(`/standings/${team.id}?minRound=4`)
+    .then(res => setStats(res.data))
+    .catch(() =>
+      setStats({
+        won: 0,
+        goals_for: 0,
+        goals_against: 0,
+      })
+    )
+}, [team?.id]);
 
   return (
     <Card
@@ -197,9 +214,9 @@ const KnockoutPickCard = ({ role, team }) => {
               }}
             >
               <Chip label={`Rank ${team.ranking ?? '-'}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(15,118,110,0.10)', color: '#12372a', fontWeight: 850 }} />
-              <Chip label={`Wins ${team.wins ?? 0}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(27,94,32,0.10)', color: '#12372a', fontWeight: 850 }} />
-              <Chip label={`GF ${team.goals_for ?? 0}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(245,158,11,0.12)', color: '#6b3f00', fontWeight: 850 }} />
-              <Chip label={`GA ${team.goals_against ?? 0}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(180,83,9,0.10)', color: '#6b3f00', fontWeight: 850 }} />
+              <Chip label={`Wins ${stats?.won ?? 0}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(27,94,32,0.10)', color: '#12372a', fontWeight: 850 }} />
+              <Chip label={`GF ${stats?.goals_for ?? 0}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(245,158,11,0.12)', color: '#6b3f00', fontWeight: 850 }} />
+              <Chip label={`GA ${stats?.goals_against ?? 0}`} size="small" sx={{ borderRadius: 1.25, backgroundColor: 'rgba(180,83,9,0.10)', color: '#6b3f00', fontWeight: 850 }} />
             </Box>
           </>
         ) : (

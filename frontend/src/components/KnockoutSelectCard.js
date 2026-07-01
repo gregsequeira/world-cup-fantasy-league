@@ -12,7 +12,7 @@ useEffect(() => {
 
   setLoadingStats(true);
 
-  axios.get(`/standings/${team.id}`)
+  axios.get(`/standings/${team.id}?minRound=4`)
     .then(res => setStats(res.data))
     .catch(() =>
       setStats({

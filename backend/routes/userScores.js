@@ -185,17 +185,21 @@ router.get('/details', async (req, res) => {
       WITH
       ${selectionsCte},
       ${teamPointsCte}
+
       SELECT
         u.id AS user_id,
         u.name AS user_name,
         u.verified,
         ${displayPhaseSql} AS display_phase,
-        COALESCE(SUM(CASE WHEN tp.phase = 'group' THEN tp.points ELSE 0 END), 0) AS group_points,
-        COALESCE(SUM(CASE WHEN tp.phase = 'knockout' THEN tp.points ELSE 0 END), 0) AS knockout_points,
-        COALESCE(SUM(tp.points), 0) AS total_points,
-        COALESCE(SUM(CASE WHEN tp.phase = 'group' THEN tp.goal_difference ELSE 0 END), 0) AS group_goal_difference,
-        COALESCE(SUM(CASE WHEN tp.phase = 'knockout' THEN tp.goal_difference ELSE 0 END), 0) AS knockout_goal_difference,
-        COALESCE(SUM(tp.goal_difference), 0) AS total_goal_difference,
+
+        COALESCE(SUM(CASE WHEN tp.phase = 'group' THEN tp.points ELSE 0 END),0) AS group_points,
+        COALESCE(SUM(CASE WHEN tp.phase = 'knockout' THEN tp.points ELSE 0 END),0) AS knockout_points,
+        COALESCE(SUM(tp.points),0) AS total_points,
+
+        COALESCE(SUM(CASE WHEN tp.phase = 'group' THEN tp.goal_difference ELSE 0 END),0) AS group_goal_difference,
+        COALESCE(SUM(CASE WHEN tp.phase = 'knockout' THEN tp.goal_difference ELSE 0 END),0) AS knockout_goal_difference,
+        COALESCE(SUM(tp.goal_difference),0) AS total_goal_difference,
+
         COALESCE(
           json_agg(
             json_build_object(
@@ -204,13 +208,36 @@ router.get('/details', async (req, res) => {
               'team_id', t.id,
               'team_name', t.name,
               'flag_code', t.flag_code,
-              'points', COALESCE(tp.points, 0),
-              'goal_difference', COALESCE(tp.goal_difference, 0)
+              'points', COALESCE(tp.points,0),
+              'goal_difference', COALESCE(tp.goal_difference,0),
+
+              'eliminated',
+              CASE
+                WHEN tp.phase <> 'knockout' THEN false
+                WHEN EXISTS (
+                  SELECT 1
+                  FROM fixtures f
+                  WHERE f.status = 'Completed'
+                    AND f.round::integer >= 4
+                    AND (
+                      f.home_team_id = t.id
+                      OR f.away_team_id = t.id
+                    )
+                    AND f.winner_team_id <> t.id
+                )
+                THEN true
+                ELSE false
+              END
+
             )
             ORDER BY tp.role
-          ) FILTER (WHERE t.id IS NOT NULL AND tp.phase = 'group'),
+          ) FILTER (
+            WHERE t.id IS NOT NULL
+              AND tp.phase = 'group'
+          ),
           '[]'
         ) AS group_selections,
+
         COALESCE(
           json_agg(
             json_build_object(
@@ -219,13 +246,35 @@ router.get('/details', async (req, res) => {
               'team_id', t.id,
               'team_name', t.name,
               'flag_code', t.flag_code,
-              'points', COALESCE(tp.points, 0),
-              'goal_difference', COALESCE(tp.goal_difference, 0)
+              'points', COALESCE(tp.points,0),
+              'goal_difference', COALESCE(tp.goal_difference,0),
+
+              'eliminated',
+              CASE
+                WHEN EXISTS (
+                  SELECT 1
+                  FROM fixtures f
+                  WHERE f.status = 'Completed'
+                    AND f.round::integer >= 4
+                    AND (
+                      f.home_team_id = t.id
+                      OR f.away_team_id = t.id
+                    )
+                    AND f.winner_team_id <> t.id
+                )
+                THEN true
+                ELSE false
+              END
+
             )
             ORDER BY tp.role
-          ) FILTER (WHERE t.id IS NOT NULL AND tp.phase = 'knockout'),
+          ) FILTER (
+            WHERE t.id IS NOT NULL
+              AND tp.phase = 'knockout'
+          ),
           '[]'
         ) AS knockout_selections,
+
         COALESCE(
           json_agg(
             json_build_object(
@@ -234,21 +283,54 @@ router.get('/details', async (req, res) => {
               'team_id', t.id,
               'team_name', t.name,
               'flag_code', t.flag_code,
-              'points', COALESCE(tp.points, 0),
-              'goal_difference', COALESCE(tp.goal_difference, 0)
+              'points', COALESCE(tp.points,0),
+              'goal_difference', COALESCE(tp.goal_difference,0),
+
+              'eliminated',
+              CASE
+                WHEN tp.phase <> 'knockout' THEN false
+                WHEN EXISTS (
+                  SELECT 1
+                  FROM fixtures f
+                  WHERE f.status = 'Completed'
+                    AND f.round::integer >= 4
+                    AND (
+                      f.home_team_id = t.id
+                      OR f.away_team_id = t.id
+                    )
+                    AND f.winner_team_id <> t.id
+                )
+                THEN true
+                ELSE false
+              END
+
             )
             ORDER BY tp.phase, tp.role
-          ) FILTER (WHERE t.id IS NOT NULL),
+          ) FILTER (
+            WHERE t.id IS NOT NULL
+          ),
           '[]'
         ) AS selections
+
       FROM users u
-      LEFT JOIN team_points tp ON u.id = tp.user_id
-      LEFT JOIN teams t ON tp.team_id = t.id
-      GROUP BY u.id, u.name, u.verified
-      ORDER BY total_points DESC, total_goal_difference DESC;
+      LEFT JOIN team_points tp
+        ON u.id = tp.user_id
+
+      LEFT JOIN teams t
+        ON tp.team_id = t.id
+
+      GROUP BY
+        u.id,
+        u.name,
+        u.verified
+
+      ORDER BY
+        total_points DESC,
+        total_goal_difference DESC;
     `);
 
     res.json(result.rows);
+
   } catch (err) {
     console.error(err);
     res.status(500).send('Server error');

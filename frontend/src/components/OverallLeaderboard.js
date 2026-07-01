@@ -12,6 +12,7 @@ import {
   Box,
   Chip
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import Flag from 'react-world-flags';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import axios from '../axiosConfig';
@@ -29,8 +30,6 @@ const roleLabels = {
   KO2: 'KO Team 2',
   KO3: 'KO Team 3',
 };
-
-const boostedRoles = ['Favourite', 'Underdog', 'KOFavourite'];
 
 const getSelectionByRole = (selections = [], role) => {
   return selections.find(sel => sel.role === role);
@@ -56,7 +55,7 @@ const TeamPointsChip = ({ selection, role }) => {
     );
   }
 
-  const boosted = boostedRoles.includes(role);
+  const eliminated = selection?.eliminated ?? false;
 
   return (
     <Box
@@ -69,20 +68,24 @@ const TeamPointsChip = ({ selection, role }) => {
         px: 0.75,
         py: 0.5,
         borderRadius: 1.5,
-        background: boosted
-          ? 'linear-gradient(135deg, rgba(255,243,205,0.20) 0%, rgba(217,251,232,0.14) 100%)'
+        background: eliminated 
+          ? 'rgba(110,110,110,0.22)'
           : 'rgba(217,251,232,0.12)',
-        border: boosted
-          ? '1px solid rgba(245,158,11,0.34)'
+        border: eliminated
+          ? '1px solid rgba(170,170,170,0.35)'
           : '1px solid rgba(217,251,232,0.22)',
         width: 174,
         whiteSpace: 'nowrap',
+        opacity: eliminated ? 0.65 : 1,
+        transition: 'all 0.25s ease',
       }}
     >
       {selection.flag_code && (
         <Flag
           code={selection.flag_code}
           style={{
+            filter: eliminated ? 'grayscale(100%)' : 'none',
+            opacity: eliminated ? 0.55 : 1,
             width: 28,
             height: 18,
             objectFit: 'cover',
@@ -111,24 +114,41 @@ const TeamPointsChip = ({ selection, role }) => {
       </Typography>
 
       <Chip
-        label={toNumber(selection.points)}
+    label={toNumber(selection.points)}
+    size="small"
+    sx={{
+        height: 20,
+        minWidth: 28,
+        borderRadius: 1,
+        backgroundColor: '#fff3cd',
+        color: '#8a5a00',
+        fontWeight: 900,
+        fontSize: '0.65rem',
+        '& .MuiChip-label': {
+            px: 0.75,
+        },
+    }}
+/>
+
+{eliminated && (
+    <Chip
+        label="OUT"
+        icon={<CloseIcon />}
         size="small"
         sx={{
-          height: 20,
-          minWidth: 28,
-          borderRadius: 1,
-          backgroundColor: '#fff3cd',
-          color: '#8a5a00',
-          fontWeight: 900,
-          fontSize: '0.65rem',
-          '& .MuiChip-label': {
-            px: 0.75,
-          },
+            ml: 0.4,
+            height: 18,
+            backgroundColor: '#616161',
+            color: '#fff',
+            fontWeight: 900,
+            fontSize: '0.55rem',
         }}
-      />
+    />
+)}
     </Box>
   );
 };
+
 
 const OverallLeaderboard = () => {
   const [scores, setScores] = useState([]);
