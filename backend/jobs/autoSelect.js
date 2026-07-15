@@ -1,6 +1,5 @@
 const pool = require('../db');
 const { isBeforeCutoff } = require('../utils/cutoff');
-
 async function autoAssignTeams() {
   try {
     if (await isBeforeCutoff()) {

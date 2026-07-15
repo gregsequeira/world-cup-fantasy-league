@@ -45,8 +45,8 @@ const nextFixtureMap = {
   99: { fixtureId: 102, slot: 'home' },
   100: { fixtureId: 102, slot: 'away' },
 
-  101: { fixtureId: 104, slot: 'home' },
-  102: { fixtureId: 104, slot: 'away' },
+  101: { fixtureId: 103, slot: 'home' },
+  102: { fixtureId: 103, slot: 'away' },
 };
 
 // Get all fixtures
