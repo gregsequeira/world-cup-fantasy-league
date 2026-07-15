@@ -49,9 +49,72 @@ const nextFixtureMap = {
   102: { fixtureId: 103, slot: 'away' },
 };
 
+const normaliseStatus = (status) => String(status || '').toLowerCase();
+
+const deriveWinnerTeamId = (fixture) => {
+  const homeScore = Number(fixture.home_score);
+  const awayScore = Number(fixture.away_score);
+
+  if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore)) {
+    return null;
+  }
+
+  if (homeScore > awayScore) return fixture.home_team_id;
+  if (awayScore > homeScore) return fixture.away_team_id;
+
+  const penaltyHome = Number(fixture.penalty_home);
+  const penaltyAway = Number(fixture.penalty_away);
+
+  if (!Number.isFinite(penaltyHome) || !Number.isFinite(penaltyAway)) {
+    return null;
+  }
+
+  if (penaltyHome > penaltyAway) return fixture.home_team_id;
+  if (penaltyAway > penaltyHome) return fixture.away_team_id;
+
+  return null;
+};
+
+const reconcileKnockoutProgression = async () => {
+  const sourceFixtureIds = Object.keys(nextFixtureMap).map((id) => Number(id));
+
+  const sourceFixtures = await pool.query(
+    `SELECT id, status, winner_team_id,
+            home_team_id, away_team_id,
+            home_score, away_score,
+            penalty_home, penalty_away
+     FROM fixtures
+     WHERE id = ANY($1::int[])`,
+    [sourceFixtureIds]
+  );
+
+  for (const fixture of sourceFixtures.rows) {
+    if (normaliseStatus(fixture.status) !== 'completed') continue;
+
+    const nextMatch = nextFixtureMap[fixture.id];
+    if (!nextMatch) continue;
+
+    const winnerTeamId = fixture.winner_team_id || deriveWinnerTeamId(fixture);
+    if (!winnerTeamId) continue;
+
+    const field = nextMatch.slot === 'home' ? 'home_team_id' : 'away_team_id';
+    const placeholderField = field === 'home_team_id' ? 'home_placeholder' : 'away_placeholder';
+
+    await pool.query(
+      `UPDATE fixtures
+       SET ${field} = $1,
+           ${placeholderField} = NULL
+       WHERE id = $2`,
+      [winnerTeamId, nextMatch.fixtureId]
+    );
+  }
+};
+
 // Get all fixtures
 router.get('/', async (req, res) => {
   try {
+    await reconcileKnockoutProgression();
+
     const result = await pool.query(`
       SELECT f.*,
              t1.name AS home_team,
@@ -79,6 +142,8 @@ router.get('/', async (req, res) => {
 router.get('/team/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    await reconcileKnockoutProgression();
+
     const result = await pool.query(`
       SELECT f.*,
              t1.name AS home_team,
@@ -178,25 +243,25 @@ router.put('/:id/result', async (req, res) => {
 
     const nextMatch = nextFixtureMap[fixtureId];
 
-if (
-  status === 'Completed' &&
-  nextMatch &&
-  winner_team_id
-) {
-  const field =
-    nextMatch.slot === 'home'
-      ? 'home_team_id'
-      : 'away_team_id';
-  await pool.query(
-  `UPDATE fixtures
-   SET ${field} = $1,
-       ${field === 'home_team_id'
-          ? 'home_placeholder'
-          : 'away_placeholder'} = NULL
-   WHERE id = $2`,
-  [winner_team_id, nextMatch.fixtureId]
-);
-}
+    if (
+      normaliseStatus(status) === 'completed' &&
+      nextMatch &&
+      winner_team_id
+    ) {
+      const field =
+        nextMatch.slot === 'home'
+          ? 'home_team_id'
+          : 'away_team_id';
+      await pool.query(
+        `UPDATE fixtures
+         SET ${field} = $1,
+             ${field === 'home_team_id'
+              ? 'home_placeholder'
+              : 'away_placeholder'} = NULL
+         WHERE id = $2`,
+        [winner_team_id, nextMatch.fixtureId]
+      );
+    }
 
     res.json(result.rows[0]);
   } catch (err) {
