@@ -235,7 +235,7 @@ const EmptyMessage = ({ children }) => (
   </Box>
 );
 
-const TournamentPulse = ({ fixtures = [], scores = [], loading = false }) => {
+const TournamentPulse = ({ fixtures = [], scores = [], loading = false, isFinalStage = false }) => {
   const dashboard = useMemo(() => {
     const now = new Date();
     const sortedFixtures = [...fixtures].sort((a, b) => getFixtureDate(a) - getFixtureDate(b));
@@ -332,7 +332,7 @@ const TournamentPulse = ({ fixtures = [], scores = [], loading = false }) => {
     >
       <Section
         title={dashboard.featuredTitle}
-        subtitle={dashboard.featuredTitle === "Today's matches" ? 'The action happening today' : 'The next matches on the schedule'}
+        subtitle={isFinalStage ? 'The decisive fixture that closes the tournament' : dashboard.featuredTitle === "Today's matches" ? 'The action happening today' : 'The next matches on the schedule'}
         icon={SportsSoccerRoundedIcon}
         accent="#0f766e"
       >
@@ -344,8 +344,8 @@ const TournamentPulse = ({ fixtures = [], scores = [], loading = false }) => {
       </Section>
 
       <Section
-        title="Leaderboard podium"
-        subtitle="The players setting the pace"
+        title={isFinalStage ? 'Champion watch' : 'Leaderboard podium'}
+        subtitle={isFinalStage ? 'The verified leaderboard at the finish line' : 'The players setting the pace'}
         icon={EmojiEventsRoundedIcon}
         accent="#b45309"
       >
@@ -385,8 +385,8 @@ const TournamentPulse = ({ fixtures = [], scores = [], loading = false }) => {
       </Section>
 
       <Section
-        title={`${ROUND_NAMES[dashboard.currentRound] || 'Tournament'} progress`}
-        subtitle="A quick view of the current stage"
+        title={isFinalStage ? 'Final stage progress' : `${ROUND_NAMES[dashboard.currentRound] || 'Tournament'} progress`}
+        subtitle={isFinalStage ? 'Only the championship match remains' : 'A quick view of the current stage'}
         icon={TimelineRoundedIcon}
         accent="#1b5e20"
       >
@@ -417,8 +417,8 @@ const TournamentPulse = ({ fixtures = [], scores = [], loading = false }) => {
       </Section>
 
       <Section
-        title="Latest results"
-        subtitle="The three most recently completed matches"
+        title={isFinalStage ? 'Final-stage results' : 'Latest results'}
+        subtitle={isFinalStage ? 'The matches that settled the final run-in' : 'The three most recently completed matches'}
         icon={HistoryRoundedIcon}
         accent="#375448"
       >
@@ -430,8 +430,8 @@ const TournamentPulse = ({ fixtures = [], scores = [], loading = false }) => {
       </Section>
 
       <Section
-        title="Knockout path"
-        subtitle={`Upcoming ${ROUND_NAMES[dashboard.currentRound] || 'knockout'} matchups`}
+        title={isFinalStage ? 'Final pairing' : 'Knockout path'}
+        subtitle={isFinalStage ? 'The closing fixture of the bracket' : `Upcoming ${ROUND_NAMES[dashboard.currentRound] || 'knockout'} matchups`}
         icon={AccountTreeRoundedIcon}
         accent="#8a5a00"
         sx={{ gridColumn: { lg: '1 / -1' } }}

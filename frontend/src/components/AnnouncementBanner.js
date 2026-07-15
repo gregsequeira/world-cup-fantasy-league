@@ -62,7 +62,7 @@ const formatTimeUntil = (fixture, now) => {
   return `${Math.max(minutes, 1)}m away`;
 };
 
-const AnnouncementBanner = ({ fixtures = [], scores = [], loading = false }) => {
+const AnnouncementBanner = ({ fixtures = [], scores = [], loading = false, isFinalStage = false }) => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [paused, setPaused] = useState(false);
   const [now, setNow] = useState(new Date());
@@ -150,7 +150,7 @@ const AnnouncementBanner = ({ fixtures = [], scores = [], loading = false }) => 
     return [
       {
         id: 'fixture',
-        eyebrow: isLive ? 'Live now' : 'Next fixture',
+        eyebrow: isFinalStage ? 'Final showdown' : isLive ? 'Live now' : 'Next fixture',
         icon: SportsSoccerRoundedIcon,
         title: fixture ? `${homeTeam} vs ${awayTeam}` : 'Next fixture coming soon',
         description: fixture
@@ -165,7 +165,7 @@ const AnnouncementBanner = ({ fixtures = [], scores = [], loading = false }) => 
       },
       {
         id: 'leader',
-        eyebrow: leaders.length > 1 ? 'Joint leaders' : 'Current leader',
+        eyebrow: isFinalStage ? 'Winner watch' : leaders.length > 1 ? 'Joint leaders' : 'Current leader',
         icon: EmojiEventsRoundedIcon,
         title: leader
           ? leaders.length > 2
@@ -173,7 +173,9 @@ const AnnouncementBanner = ({ fixtures = [], scores = [], loading = false }) => 
             : leaderNames
           : 'Leaderboard awaiting results',
         description: leader
-          ? 'Setting the pace as the knockout stage unfolds.'
+          ? isFinalStage
+            ? 'The title race now has a clear front-runner.'
+            : 'Setting the pace as the knockout stage unfolds.'
           : 'Scores will appear as completed results are entered.',
         chips: leader
           ? [`${leader.total_points} points`, `GD ${leader.total_goal_difference}`]
@@ -182,14 +184,16 @@ const AnnouncementBanner = ({ fixtures = [], scores = [], loading = false }) => 
       },
       {
         id: 'stage',
-        eyebrow: 'Tournament progress',
+        eyebrow: isFinalStage ? 'Final stage' : 'Tournament progress',
         icon: GroupsRoundedIcon,
-        title: ROUND_NAMES[tournament.currentRound] || 'Knockout stage',
+        title: isFinalStage ? 'Championship match' : ROUND_NAMES[tournament.currentRound] || 'Knockout stage',
         description: roundTotal
-          ? `${tournament.completedFixtures} of ${roundTotal} fixtures completed.`
+          ? isFinalStage
+            ? `${tournament.completedFixtures} of ${roundTotal} fixtures decided in the final round.`
+            : `${tournament.completedFixtures} of ${roundTotal} fixtures completed.`
           : 'Fixtures will appear as the tournament progresses.',
         chips: roundTotal
-          ? [`${roundTotal - tournament.completedFixtures} remaining`]
+          ? [isFinalStage ? 'Final match' : `${roundTotal - tournament.completedFixtures} remaining`]
           : [],
         progress,
         accent: '#1b5e20',

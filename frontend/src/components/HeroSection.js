@@ -31,7 +31,7 @@ const HeroSection = () => (
     >
       <Box sx={{ maxWidth: 760 }}>
         <Chip
-          label="World Cup 2026 Fantasy"
+          label="World Cup 2026 Fantasy - Final Stage"
           size="small"
           sx={{
             mb: 2,
@@ -55,7 +55,7 @@ const HeroSection = () => (
             letterSpacing: 0,
           }}
         >
-          World Cup Fantasy League
+          Fantasy League Finals
         </Typography>
 
         <Typography
@@ -69,7 +69,7 @@ const HeroSection = () => (
             fontWeight: 600,
           }}
         >
-          Choose your four nations, back your favourites, and climb the table as the tournament unfolds.
+          The tournament has reached its final act. The decisive match, the finalists, and the likely league winner are all front and centre.
         </Typography>
       </Box>
     </Box>
