@@ -199,7 +199,7 @@ const AnnouncementBanner = ({ fixtures = [], scores = [], loading = false, isFin
         accent: '#1b5e20',
       },
     ];
-  }, [leaders, now, tournament]);
+  }, [isFinalStage, leaders, now, tournament]);
 
   useEffect(() => {
     if (paused || loading) return undefined;
